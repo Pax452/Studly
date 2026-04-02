@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Studly — Peer Tutoring for GCSE & A Level</title>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--black:#0a0a0a;--white:#fafaf8;--g1:#f5f5f3;--g2:#e8e8e5;--g3:#c8c8c4;--g4:#888884;--g5:#444442;--serif:'Cormorant Garamond',Georgia,serif;--body:'Libre Baskerville',serif;--ln:1px solid #0a0a0a;--lnl:1px solid #e8e8e5;}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:var(--body);background:var(--white);color:var(--black);overflow-x:hidden;font-size:13px;line-height:1.6;}
+#loader{position:fixed;inset:0;background:var(--white);z-index:9999;display:flex;align-items:center;justify-content:center;transition:opacity 0.8s ease;}
+.logo-load{font-family:var(--serif);font-size:52px;font-weight:300;letter-spacing:0.15em;opacity:0;animation:fadein 1.2s ease 0.3s forwards;}
+@keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+#site{opacity:0;transition:opacity 0.6s ease;}
+#site.visible{opacity:1;}
+.pt{position:fixed;inset:0;background:var(--white);z-index:500;pointer-events:none;opacity:0;transition:opacity 0.28s ease;}
+.pt.in{opacity:1;}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:200;background:var(--white);border-bottom:var(--ln);display:flex;align-items:center;justify-content:space-between;padding:0 40px;height:56px;}
+.nav-logo{font-family:var(--serif);font-size:26px;font-weight:300;letter-spacing:0.12em;cursor:pointer;}
+.nav-links{display:flex;align-items:center;gap:32px;list-style:none;}
+.nav-links a{text-decoration:none;color:var(--g4);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;transition:color 0.2s;cursor:pointer;}
+.nav-links a:hover{color:var(--black);}
+.nav-right{display:flex;align-items:center;gap:12px;}
+.btn-x{font-family:var(--body);font-size:11px;letter-spacing:0.1em;text-transform:uppercase;border:var(--ln);padding:8px 20px;cursor:pointer;transition:all 0.2s;background:none;color:var(--black);}
+.btn-x:hover{background:var(--black);color:var(--white);}
+.btn-dark{background:var(--black);color:var(--white);}
+.btn-dark:hover{background:var(--g5)!important;}
+.theme-strip{position:fixed;top:56px;right:0;z-index:99;border-left:var(--ln);border-bottom:var(--ln);display:flex;background:var(--white);}
+.swatch{width:32px;height:28px;cursor:pointer;border-right:var(--ln);transition:transform 0.15s;position:relative;}
+.swatch:hover{transform:scaleY(1.1);}
+.swatch.on::after{content:'';position:absolute;bottom:3px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--black);}
+.page{display:none;min-height:100vh;}
+.page.active{display:block;}
+
+/* AUTH FEEDBACK */
+.auth-msg{padding:12px 16px;font-size:11px;line-height:1.7;margin-bottom:20px;display:none;}
+.auth-msg.err{background:#fff0f0;border-left:2px solid #cc0000;color:#cc0000;}
+.auth-msg.ok{background:#f0fff4;border-left:2px solid #00aa44;color:#00aa44;}
+.auth-msg.show{display:block;}
+
+/* HOME */
+#hero-page{padding-top:56px;}
+.hero{display:grid;grid-template-columns:1fr 1fr;border-bottom:var(--ln);min-height:calc(100vh - 56px);}
+.hl{padding:80px 60px;border-right:var(--ln);display:flex;flex-direction:column;justify-content:space-between;}
+.eyebrow{font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--g4);margin-bottom:48px;}
+.ht{font-family:var(--serif);font-size:clamp(64px,8vw,110px);font-weight:300;line-height:0.95;letter-spacing:-0.02em;margin-bottom:48px;}
+.ht em{font-style:italic;}
+.hsub{font-size:13px;color:var(--g5);max-width:340px;line-height:1.8;margin-bottom:48px;}
+.hact{display:flex;}
+.hbtn{font-family:var(--body);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;padding:14px 32px;cursor:pointer;border:var(--ln);transition:all 0.2s;}
+.hbtn-p{background:var(--black);color:var(--white);margin-right:-1px;}
+.hbtn-p:hover{background:var(--g5);}
+.hbtn-s{background:transparent;color:var(--black);}
+.hbtn-s:hover{background:var(--g1);}
+.hr{display:flex;flex-direction:column;}
+.stat-row{display:grid;grid-template-columns:1fr 1fr;flex:1;}
+.stat{padding:40px;border-bottom:var(--ln);border-right:var(--ln);}
+.stat:nth-child(2){border-right:none;}
+.stat:nth-child(3){border-bottom:none;}
+.stat:nth-child(4){border-bottom:none;border-right:none;}
+.snum{font-family:var(--serif);font-size:52px;font-weight:300;line-height:1;margin-bottom:8px;}
+.slbl{font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--g4);}
+
+/* JOIN STRIP */
+.join-strip{background:var(--black);color:var(--white);display:grid;grid-template-columns:1fr 1fr 1fr 1fr;border-bottom:var(--ln);}
+.jcol{padding:52px 40px;border-right:1px solid #1c1c1c;}
+.jcol:last-child{border-right:none;display:flex;flex-direction:column;justify-content:center;}
+.jtag{font-size:9px;letter-spacing:0.22em;text-transform:uppercase;color:var(--g4);margin-bottom:20px;}
+.jnum{font-family:var(--serif);font-size:60px;font-weight:300;line-height:1;color:#222;margin-bottom:16px;}
+.jtit{font-family:var(--serif);font-size:22px;font-weight:400;margin-bottom:10px;color:var(--white);}
+.jtxt{font-size:11px;color:var(--g4);line-height:1.85;}
+.jcta{font-family:var(--body);font-size:11px;letter-spacing:0.15em;text-transform:uppercase;padding:14px 28px;background:var(--white);color:var(--black);border:1px solid var(--white);cursor:pointer;transition:all 0.2s;margin-bottom:12px;}
+.jcta:hover{background:transparent;color:var(--white);}
+.jsub{font-size:10px;color:var(--g4);line-height:1.8;}
+
+/* FILTERS */
+.filters{border-bottom:var(--ln);}
+.frow{display:flex;align-items:center;border-bottom:var(--lnl);}
+.frow:last-child{border-bottom:none;}
+.flbl{padding:14px 24px;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--g4);border-right:var(--lnl);min-width:130px;white-space:nowrap;}
+.pills{display:flex;overflow-x:auto;scrollbar-width:none;padding:10px 16px;gap:8px;flex:1;}
+.pills::-webkit-scrollbar{display:none;}
+.pill{font-family:var(--body);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;padding:6px 16px;border:var(--lnl);background:transparent;cursor:pointer;white-space:nowrap;transition:all 0.15s;color:var(--black);}
+.pill:hover,.pill.on{background:var(--black);color:var(--white);border-color:var(--black);}
+
+/* MARQUEE */
+.mbar{overflow:hidden;border-top:var(--ln);border-bottom:var(--ln);padding:12px 0;background:var(--black);}
+.minner{display:flex;gap:48px;animation:mq 28s linear infinite;white-space:nowrap;width:max-content;}
+@keyframes mq{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.mi{font-family:var(--serif);font-size:14px;font-weight:300;letter-spacing:0.1em;color:var(--white);font-style:italic;}
+.md{color:#555;font-style:normal;}
+
+/* TUTORS */
+.sec-hdr{display:flex;align-items:center;justify-content:space-between;padding:28px 40px;border-bottom:var(--ln);}
+.sec-t{font-family:var(--serif);font-size:32px;font-weight:300;}
+.sec-m{font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--g4);}
+.tgrid{display:grid;grid-template-columns:repeat(4,1fr);}
+.tc{border-right:var(--ln);border-bottom:var(--ln);cursor:pointer;transition:background 0.2s;overflow:hidden;position:relative;}
+.tc:nth-child(4n){border-right:none;}
+.tc:hover{background:var(--g1);}
+.tcimg{width:100%;aspect-ratio:4/3;background:var(--g2);border-bottom:var(--ln);display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:36px;font-weight:300;color:var(--g4);position:relative;}
+.fbadge{position:absolute;top:12px;left:12px;background:var(--black);color:var(--white);font-size:7px;letter-spacing:0.2em;text-transform:uppercase;padding:4px 9px;}
+.tcb{padding:18px 20px 20px;}
+.tname{font-family:var(--serif);font-size:18px;font-weight:400;margin-bottom:2px;}
+.tsubj{font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--g4);margin-bottom:8px;}
+.tdesc{font-size:11px;color:var(--g5);line-height:1.7;margin-bottom:12px;}
+.tqual{font-size:10px;color:var(--g4);margin-bottom:4px;display:flex;align-items:center;gap:6px;}
+.tqual-dot{width:3px;height:3px;border-radius:50%;background:var(--g3);flex-shrink:0;}
+.tmeta{display:flex;justify-content:space-between;align-items:flex-end;margin-top:14px;padding-top:12px;border-top:var(--lnl);}
+.trate{font-family:var(--serif);font-size:20px;font-weight:300;}
+.trate span{font-family:var(--body);font-size:10px;color:var(--g4);}
+.tboard{font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--g4);border:var(--lnl);padding:3px 8px;}
+.ad-spot{border-right:var(--ln);border-bottom:var(--ln);position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;padding:24px;background:var(--g1);}
+.ad-label{position:absolute;top:12px;right:12px;font-size:7px;letter-spacing:0.2em;text-transform:uppercase;color:var(--g3);}
+.ad-inner{font-family:var(--serif);font-size:13px;font-weight:300;color:var(--g4);font-style:italic;line-height:1.5;}
+.ad-cta{margin-top:12px;font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--g4);border-bottom:1px solid var(--g3);padding-bottom:2px;display:inline-block;cursor:pointer;transition:color 0.2s;}
+.ad-cta:hover{color:var(--black);}
+.ad-wide{grid-column:span 2;border-right:var(--ln);border-bottom:var(--ln);display:flex;align-items:center;justify-content:space-between;padding:28px 36px;background:var(--g1);position:relative;}
+.ad-wide-text{font-family:var(--serif);font-size:18px;font-weight:300;font-style:italic;color:var(--g5);}
+.ad-wide-sub{font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--g4);margin-top:6px;}
+
+/* HOW */
+.how{display:grid;grid-template-columns:repeat(3,1fr);border-top:var(--ln);}
+.hc{padding:60px 40px;border-right:var(--ln);}
+.hc:last-child{border-right:none;}
+.hnum{font-family:var(--serif);font-size:80px;font-weight:300;color:var(--g2);line-height:1;margin-bottom:24px;}
+.htit{font-family:var(--serif);font-size:24px;font-weight:400;margin-bottom:12px;}
+.htxt{font-size:12px;color:var(--g5);line-height:1.9;}
+
+/* FOOTER */
+footer{border-top:var(--ln);display:grid;grid-template-columns:1fr 1fr 1fr 1fr;}
+.fcol{padding:48px 40px;border-right:var(--ln);}
+.fcol:last-child{border-right:none;}
+.fctit{font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--g4);margin-bottom:20px;}
+.flinks{list-style:none;}
+.flinks li{margin-bottom:10px;}
+.flinks a{font-size:12px;color:var(--g5);text-decoration:none;cursor:pointer;transition:color 0.2s;}
+.flinks a:hover{color:var(--black);}
+.flogo{font-family:var(--serif);font-size:36px;font-weight:300;letter-spacing:0.1em;margin-bottom:16px;}
+.fcopy{font-size:10px;color:var(--g4);line-height:1.8;}
+
+/* AUTH */
+.auth-wrap{display:flex;min-height:calc(100vh - 56px);padding-top:56px;}
+.auth-left{width:420px;flex-shrink:0;border-right:var(--ln);padding:72px 56px;display:flex;flex-direction:column;justify-content:space-between;background:var(--black);color:var(--white);}
+.auth-left-logo{font-family:var(--serif);font-size:22px;letter-spacing:0.12em;font-weight:300;cursor:pointer;color:var(--white);}
+.auth-left-big{font-family:var(--serif);font-size:clamp(40px,4.5vw,68px);font-weight:300;line-height:1;letter-spacing:-0.02em;}
+.auth-left-big em{font-style:italic;}
+.auth-left-note{font-size:11px;color:var(--g4);line-height:1.85;max-width:260px;}
+.auth-right{flex:1;padding:64px 60px;display:flex;flex-direction:column;justify-content:center;max-width:560px;}
+.auth-title{font-family:var(--serif);font-size:32px;font-weight:300;margin-bottom:6px;}
+.auth-sub{font-size:11px;color:var(--g4);margin-bottom:36px;line-height:1.7;}
+.auth-sub span{color:var(--black);cursor:pointer;text-decoration:underline;}
+.fg{margin-bottom:20px;}
+.fg-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
+.fl{display:block;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--g4);margin-bottom:8px;}
+.fi{width:100%;border:none;border-bottom:var(--ln);padding:10px 0;font-family:var(--body);font-size:13px;background:transparent;color:var(--black);outline:none;transition:border-bottom 0.2s;}
+.fi:focus{border-bottom:2px solid var(--black);}
+.fi::placeholder{color:var(--g3);}
+select.fi{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%23888884' stroke-width='1' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 4px center;}
+.sbtn{width:100%;padding:14px;font-family:var(--body);font-size:11px;letter-spacing:0.15em;text-transform:uppercase;background:var(--black);color:var(--white);border:var(--ln);cursor:pointer;margin-top:8px;transition:all 0.2s;}
+.sbtn:hover{background:var(--g5);}
+.sbtn:disabled{background:var(--g3);border-color:var(--g3);cursor:not-allowed;}
+.rtog{display:flex;margin-bottom:24px;border:var(--ln);}
+.rbtn{flex:1;padding:10px;font-family:var(--body);font-size:10px;letter-spacing:0.12em;text-transform:uppercase;border:none;background:transparent;cursor:pointer;transition:all 0.2s;color:var(--g4);}
+.rbtn.on{background:var(--black);color:var(--white);}
+.note-box{background:var(--g1);border-left:2px solid var(--g3);padding:12px 16px;font-size:11px;color:var(--g5);line-height:1.75;margin-bottom:24px;}
+.check-pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;}
+.cpill{font-family:var(--body);font-size:10px;letter-spacing:0.08em;padding:6px 14px;border:var(--lnl);background:transparent;cursor:pointer;transition:all 0.15s;color:var(--g5);user-select:none;}
+.cpill.on{background:var(--black);color:var(--white);border-color:var(--black);}
+
+/* TUTOR ONBOARDING */
+#tutor-signup-page{padding-top:56px;}
+.onb-wrap{display:grid;grid-template-columns:360px 1fr;min-height:calc(100vh - 56px);}
+.onb-left{background:var(--black);padding:60px 48px;display:flex;flex-direction:column;border-right:var(--ln);}
+.onb-left-logo{font-family:var(--serif);font-size:22px;letter-spacing:0.12em;color:var(--white);cursor:pointer;margin-bottom:48px;}
+.onb-steps{list-style:none;flex:1;}
+.onb-step{display:flex;align-items:flex-start;gap:16px;padding:20px 0;border-bottom:1px solid #1a1a1a;}
+.onb-step:last-child{border-bottom:none;}
+.onb-snum{font-family:var(--serif);font-size:28px;font-weight:300;color:#2a2a2a;line-height:1;flex-shrink:0;width:36px;transition:color 0.3s;}
+.onb-snum.active{color:var(--white);}
+.onb-snum.done{color:var(--g4);font-size:16px;padding-top:6px;}
+.onb-stit{font-family:var(--serif);font-size:17px;font-weight:400;color:#333;margin-bottom:4px;transition:color 0.3s;}
+.onb-stit.active{color:var(--white);}
+.onb-sdesc{font-size:10px;color:#333;line-height:1.75;transition:color 0.3s;}
+.onb-sdesc.active{color:var(--g4);}
+.onb-note{font-size:10px;color:var(--g4);line-height:1.85;margin-top:40px;padding-top:24px;border-top:1px solid #1a1a1a;}
+.onb-right{padding:64px 60px;overflow-y:auto;}
+.onb-title{font-family:var(--serif);font-size:36px;font-weight:300;margin-bottom:8px;}
+.onb-sub{font-size:12px;color:var(--g4);margin-bottom:40px;line-height:1.75;}
+.back-btn{background:transparent;color:var(--black);flex:0 0 auto;width:auto;padding:14px 24px;}
+
+/* DASHBOARD */
+#dashboard-page{padding-top:56px;}
+.dash-header{padding:48px;border-bottom:var(--ln);display:flex;justify-content:space-between;align-items:flex-end;}
+.dash-greeting{font-family:var(--serif);font-size:clamp(32px,5vw,56px);font-weight:300;line-height:1;}
+.dash-greeting em{font-style:italic;}
+.dash-tabs{display:flex;border:var(--ln);}
+.dash-tab{font-family:var(--body);font-size:10px;letter-spacing:0.12em;text-transform:uppercase;padding:10px 24px;border-right:var(--ln);background:transparent;cursor:pointer;color:var(--g4);transition:all 0.2s;}
+.dash-tab:last-child{border-right:none;}
+.dash-tab.on{background:var(--black);color:var(--white);}
+.dash-body{display:grid;grid-template-columns:2fr 1fr;border-bottom:var(--ln);}
+.dash-main{padding:48px;border-right:var(--ln);}
+.dash-side{padding:40px;}
+.dash-sec{font-family:var(--serif);font-size:22px;font-weight:400;margin-bottom:20px;padding-bottom:12px;border-bottom:var(--lnl);}
+.dash-row{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:var(--lnl);}
+.dash-row:last-child{border-bottom:none;}
+.dash-name{font-family:var(--serif);font-size:16px;}
+.dash-meta{font-size:10px;color:var(--g4);margin-top:3px;letter-spacing:0.06em;}
+.dash-price{font-family:var(--serif);font-size:20px;font-weight:300;}
+.dash-card{border:var(--lnl);padding:28px;margin-bottom:24px;}
+.dash-card-num{font-family:var(--serif);font-size:44px;font-weight:300;line-height:1;margin-bottom:6px;}
+.dash-card-lbl{font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--g4);}
+
+/* PROFILE */
+#profile-page{padding-top:56px;}
+.breadcrumb{padding:14px 40px;border-bottom:var(--lnl);font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--g4);cursor:pointer;}
+.breadcrumb:hover{color:var(--black);}
+.phero{display:grid;grid-template-columns:300px 1fr;border-bottom:var(--ln);min-height:340px;}
+.pimg{background:var(--g2);border-right:var(--ln);display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:72px;font-weight:300;color:var(--g4);}
+.pinf{padding:48px;display:flex;flex-direction:column;justify-content:space-between;}
+.pname{font-family:var(--serif);font-size:48px;font-weight:300;line-height:1;margin-bottom:8px;}
+.ptag{font-size:12px;color:var(--g4);margin-bottom:24px;}
+.ptags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px;}
+.tag{font-size:9px;letter-spacing:0.15em;text-transform:uppercase;border:var(--lnl);padding:4px 12px;color:var(--g5);}
+.prrw{display:flex;align-items:flex-end;gap:28px;padding-top:20px;border-top:var(--lnl);}
+.prate{font-family:var(--serif);font-size:44px;font-weight:300;line-height:1;}
+.prn{font-size:10px;color:var(--g4);margin-bottom:6px;}
+.bookbtn{margin-left:auto;font-family:var(--body);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;background:var(--black);color:var(--white);border:var(--ln);padding:14px 36px;cursor:pointer;transition:all 0.2s;}
+.bookbtn:hover{background:var(--g5);}
+.pbody{display:grid;grid-template-columns:2fr 1fr;border-bottom:var(--ln);}
+.pmain{padding:48px;border-right:var(--ln);}
+.psbar{padding:36px;}
+.pst{font-family:var(--serif);font-size:20px;font-weight:400;margin-bottom:18px;padding-bottom:12px;border-bottom:var(--lnl);}
+.pbio{font-size:13px;color:var(--g5);line-height:1.9;margin-bottom:40px;}
+.rev{padding:20px 0;border-bottom:var(--lnl);}
+.rev:last-child{border-bottom:none;}
+.rstars{font-size:11px;letter-spacing:0.15em;color:var(--g4);margin-bottom:6px;}
+.rtxt{font-size:12px;color:var(--g5);line-height:1.8;font-style:italic;}
+.rauth{font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--g4);margin-top:8px;}
+.sess-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:var(--lnl);}
+.sess-row:last-child{border-bottom:none;}
+.sess-price{font-family:var(--serif);font-size:20px;font-weight:300;}
+.avail-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:var(--lnl);font-size:12px;color:var(--g5);}
+.avail-row:last-child{border-bottom:none;}
+.avail-tag{font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--g4);border:var(--lnl);padding:2px 8px;}
+</style>
+</head>
+<body>
+<div id="loader"><div class="logo-load">Studly</div></div>
+<div class="pt" id="pt"></div>
+<div id="site">
+
+<nav>
+  <div class="nav-logo" onclick="go('hero')">Studly</div>
+  <ul class="nav-links">
+    <li><a onclick="go('hero')">Find a Tutor</a></li>
+    <li><a onclick="go('tutor-signup')">Become a Tutor</a></li>
+    <li><a onclick="go('hero');setTimeout(()=>document.getElementById('ts').scrollIntoView({behavior:'smooth'}),400)">Browse</a></li>
+  </ul>
+  <div class="nav-right" id="nav-right">
+    <button class="btn-x" onclick="go('login')">Log In</button>
+    <button class="btn-x btn-dark" onclick="go('signup')">Join Free</button>
+  </div>
+</nav>
+
+<div class="theme-strip">
+  <div class="swatch on" style="background:#fafaf8" onclick="theme('w',this)"></div>
+  <div class="swatch" style="background:#f9f7f0" onclick="theme('v',this)"></div>
+  <div class="swatch" style="background:#e8e8e5" onclick="theme('g',this)"></div>
+</div>
+
+<!-- HOME -->
+<div class="page active" id="hero-page">
+  <section class="hero">
+    <div class="hl">
+      <div class="eyebrow">UK's Peer Tutoring Platform — GCSE &amp; A Level</div>
+      <div>
+        <div class="ht">Learn<br><em>from</em><br>those<br>who<br>know.</div>
+        <p class="hsub">Connect with student and graduate tutors across every exam board. One session or ongoing — you decide.</p>
+      </div>
+      <div class="hact">
+        <button class="hbtn hbtn-p" onclick="document.getElementById('ts').scrollIntoView({behavior:'smooth'})">Browse Tutors</button>
+        <button class="hbtn hbtn-s" onclick="go('tutor-signup')">Start Teaching</button>
+      </div>
+    </div>
+    <div class="hr">
+      <div class="stat-row">
+        <div class="stat"><div class="snum">2,400+</div><div class="slbl">Active Tutors</div></div>
+        <div class="stat"><div class="snum">48</div><div class="slbl">Subjects</div></div>
+        <div class="stat"><div class="snum">£12</div><div class="slbl">From per hour</div></div>
+        <div class="stat"><div class="snum">4.9</div><div class="slbl">Avg. rating</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="join-strip">
+    <div class="jcol">
+      <div class="jtag">Become a Tutor</div>
+      <div style="font-family:var(--serif);font-size:30px;font-weight:300;color:var(--white);line-height:1.15;margin-bottom:14px;">Three steps.<br><em>That's it.</em></div>
+      <div class="jtxt">Set up your profile in under five minutes. No CV needed. No agency. Just you, your knowledge, and your own rate.</div>
+    </div>
+    <div class="jcol"><div class="jnum">01</div><div class="jtit">Create your profile</div><div class="jtxt">Add your subjects, grades, exam board and a short bio. Set your own rate. Optional photo. Done.</div></div>
+    <div class="jcol"><div class="jnum">02</div><div class="jtit">Set your availability</div><div class="jtxt">Pick which days and times you're free. Accept or decline any request. Zero commitment, zero minimums.</div></div>
+    <div class="jcol">
+      <div class="jnum">03</div><div class="jtit">Get paid. Build your brand.</div>
+      <div class="jtxt">Payment lands in your account after every session. Build reviews. Grow your reputation.</div><br>
+      <button class="jcta" onclick="go('tutor-signup')">Start Teaching →</button>
+      <div class="jsub">Free to join &nbsp;·&nbsp; Keep 90% &nbsp;·&nbsp; No contracts</div>
+    </div>
+  </section>
+
+  <section class="filters">
+    <div class="frow"><div class="flbl">Level</div><div class="pills" id="lp"><button class="pill on" onclick="fp('lp',this)">GCSE</button><button class="pill" onclick="fp('lp',this)">A Level</button><button class="pill" onclick="fp('lp',this)">University Entry</button><button class="pill" onclick="fp('lp',this)">Other</button></div></div>
+    <div class="frow"><div class="flbl">Exam Board</div><div class="pills" id="bp"><button class="pill on" onclick="fp('bp',this)">All Boards</button><button class="pill" onclick="fp('bp',this)">AQA</button><button class="pill" onclick="fp('bp',this)">Edexcel</button><button class="pill" onclick="fp('bp',this)">OCR</button><button class="pill" onclick="fp('bp',this)">WJEC</button><button class="pill" onclick="fp('bp',this)">CIE</button><button class="pill" onclick="fp('bp',this)">CCEA</button></div></div>
+    <div class="frow"><div class="flbl">Subject</div><div class="pills" id="sp"><button class="pill on" onclick="fp('sp',this)">All Subjects</button><button class="pill" onclick="fp('sp',this)">Maths</button><button class="pill" onclick="fp('sp',this)">Further Maths</button><button class="pill" onclick="fp('sp',this)">English Lit</button><button class="pill" onclick="fp('sp',this)">History</button><button class="pill" onclick="fp('sp',this)">Physics</button><button class="pill" onclick="fp('sp',this)">Chemistry</button><button class="pill" onclick="fp('sp',this)">Biology</button><button class="pill" onclick="fp('sp',this)">Economics</button><button class="pill" onclick="fp('sp',this)">French</button><button class="pill" onclick="fp('sp',this)">Spanish</button><button class="pill" onclick="fp('sp',this)">Computer Science</button><button class="pill" onclick="fp('sp',this)">Psychology</button><button class="pill" onclick="fp('sp',this)">Geography</button></div></div>
+  </section>
+
+  <div class="mbar"><div class="minner"><span class="mi">Maths</span><span class="md"> · </span><span class="mi">English Literature</span><span class="md"> · </span><span class="mi">History</span><span class="md"> · </span><span class="mi">Physics</span><span class="md"> · </span><span class="mi">Chemistry</span><span class="md"> · </span><span class="mi">Biology</span><span class="md"> · </span><span class="mi">Economics</span><span class="md"> · </span><span class="mi">Further Maths</span><span class="md"> · </span><span class="mi">Computer Science</span><span class="md"> · </span><span class="mi">French</span><span class="md"> · </span><span class="mi">Spanish</span><span class="md"> · </span><span class="mi">Geography</span><span class="md"> · </span><span class="mi">Psychology</span><span class="md"> · </span><span class="mi">Maths</span><span class="md"> · </span><span class="mi">English Literature</span><span class="md"> · </span><span class="mi">History</span><span class="md"> · </span><span class="mi">Physics</span><span class="md"> · </span><span class="mi">Chemistry</span><span class="md"> · </span><span class="mi">Biology</span><span class="md"> · </span><span class="mi">Further Maths</span><span class="md"> · </span></div></div>
+
+  <section id="ts">
+    <div class="sec-hdr"><div class="sec-t">Featured Tutors</div><div class="sec-m">Showing 12 of 2,400+</div></div>
+    <div class="tgrid">
+      <div class="tc" onclick="go('profile')"><div class="tcimg"><span class="fbadge">Featured</span>ER</div><div class="tcb"><div class="tname">Eleanor R.</div><div class="tsubj">Maths · Further Maths</div><div class="tdesc">Pure, mechanics &amp; statistics. Especially strong on proof and complex numbers.</div><div class="tqual"><span class="tqual-dot"></span>Oxford Mathematics, 2nd year</div><div class="tqual"><span class="tqual-dot"></span>A* A* at A Level · AQA</div><div class="tqual"><span class="tqual-dot"></span>47 sessions · 4.9 ★</div><div class="tmeta"><div class="trate">£28<span>/hr</span></div><div class="tboard">AQA</div></div></div></div>
+      <div class="tc" onclick="go('profile')"><div class="tcimg">JM</div><div class="tcb"><div class="tname">James M.</div><div class="tsubj">History · Politics</div><div class="tdesc">Stuart Britain, Cold War &amp; Russia. Essay planning and source analysis.</div><div class="tqual"><span class="tqual-dot"></span>Year 13 · Predicted A*A</div><div class="tqual"><span class="tqual-dot"></span>OCR History · Crisis &amp; Conflict</div><div class="tqual"><span class="tqual-dot"></span>12 sessions · 4.8 ★</div><div class="tmeta"><div class="trate">£15<span>/hr</span></div><div class="tboard">OCR</div></div></div></div>
+      <div class="tc" onclick="go('profile')"><div class="tcimg"><span class="fbadge">Featured</span>SC</div><div class="tcb"><div class="tname">Sophia C.</div><div class="tsubj">English Literature</div><div class="tdesc">Comparative essays, close reading &amp; context. Hardy, Woolf &amp; poetry.</div><div class="tqual"><span class="tqual-dot"></span>Durham English, 1st year</div><div class="tqual"><span class="tqual-dot"></span>A* at A Level · Edexcel</div><div class="tqual"><span class="tqual-dot"></span>29 sessions · 5.0 ★</div><div class="tmeta"><div class="trate">£22<span>/hr</span></div><div class="tboard">Edexcel</div></div></div></div>
+      <div class="tc" onclick="go('profile')"><div class="tcimg">AT</div><div class="tcb"><div class="tname">Aryan T.</div><div class="tsubj">Chemistry · Biology</div><div class="tdesc">Organic mechanisms, kinetics &amp; equilibria. Also covers Biology paper 3.</div><div class="tqual"><span class="tqual-dot"></span>Imperial Biochemistry, 3rd year</div><div class="tqual"><span class="tqual-dot"></span>A*A* at A Level · AQA</div><div class="tqual"><span class="tqual-dot"></span>61 sessions · 4.9 ★</div><div class="tmeta"><div class="trate">£30<span>/hr</span></div><div class="tboard">AQA</div></div></div></div>
+      <div class="ad-spot"><div class="ad-label">Sponsored</div><div class="ad-inner">"Your tutor profile,<br>your brand."</div><div style="font-size:10px;color:var(--g4);margin-top:6px;line-height:1.7">Reach more students by featuring your sessions.</div><span class="ad-cta" onclick="go('tutor-signup')">Promote your profile →</span></div>
+      <div class="tc" onclick="go('profile')"><div class="tcimg">LK</div><div class="tcb"><div class="tname">Layla K.</div><div class="tsubj">Economics · Maths</div><div class="tdesc">Macro &amp; micro theory, data response &amp; quantitative methods.</div><div class="tqual"><span class="tqual-dot"></span>LSE Economics, 2nd year</div><div class="tqual"><span class="tqual-dot"></span>A*A at A Level · Edexcel</div><div class="tqual"><span class="tqual-dot"></span>33 sessions · 4.8 ★</div><div class="tmeta"><div class="trate">£25<span>/hr</span></div><div class="tboard">Edexcel</div></div></div></div>
+      <div class="tc" onclick="go('profile')"><div class="tcimg"><span class="fbadge">Featured</span>OP</div><div class="tcb"><div class="tname">Oliver P.</div><div class="tsubj">Physics · Maths</div><div class="tdesc">Mechanics, fields &amp; particle physics. Also covers A Level Maths for physicists.</div><div class="tqual"><span class="tqual-dot"></span>Cambridge Natural Sciences, 2nd year</div><div class="tqual"><span class="tqual-dot"></span>A*A*A* at A Level · OCR</div><div class="tqual"><span class="tqual-dot"></span>55 sessions · 5.0 ★</div><div class="tmeta"><div class="trate">£35<span>/hr</span></div><div class="tboard">OCR</div></div></div></div>
+      <div class="tc" onclick="go('profile')"><div class="tcimg">FN</div><div class="tcb"><div class="tname">Fatima N.</div><div class="tsubj">French · Spanish</div><div class="tdesc">Native French speaker. Speaking, writing &amp; listening for GCSE and A Level.</div><div class="tqual"><span class="tqual-dot"></span>Year 13 · Sixth Form</div><div class="tqual"><span class="tqual-dot"></span>A* French · A Spanish · AQA</div><div class="tqual"><span class="tqual-dot"></span>18 sessions · 4.9 ★</div><div class="tmeta"><div class="trate">£14<span>/hr</span></div><div class="tboard">AQA</div></div></div></div>
+      <div class="tc" onclick="go('profile')"><div class="tcimg">BW</div><div class="tcb"><div class="tname">Ben W.</div><div class="tsubj">Computer Science</div><div class="tdesc">Python, algorithms, data structures &amp; NEA support from concept to submission.</div><div class="tqual"><span class="tqual-dot"></span>UCL Computer Science, 1st year</div><div class="tqual"><span class="tqual-dot"></span>A* at A Level · AQA</div><div class="tqual"><span class="tqual-dot"></span>22 sessions · 4.7 ★</div><div class="tmeta"><div class="trate">£18<span>/hr</span></div><div class="tboard">AQA</div></div></div></div>
+      <div class="tc" onclick="go('profile')"><div class="tcimg">MO</div><div class="tcb"><div class="tname">Maya O.</div><div class="tsubj">Psychology · Sociology</div><div class="tdesc">Research methods, key studies &amp; evaluation. Essay structure &amp; 16-mark answers.</div><div class="tqual"><span class="tqual-dot"></span>Warwick Psychology, 1st year</div><div class="tqual"><span class="tqual-dot"></span>A*A at A Level · AQA</div><div class="tqual"><span class="tqual-dot"></span>14 sessions · 4.8 ★</div><div class="tmeta"><div class="trate">£16<span>/hr</span></div><div class="tboard">AQA</div></div></div></div>
+      <div class="tc" onclick="go('profile')"><div class="tcimg">RP</div><div class="tcb"><div class="tname">Rohan P.</div><div class="tsubj">Maths · Economics</div><div class="tdesc">GCSE &amp; A Level Maths. Financial maths &amp; graphs. Very calm approach.</div><div class="tqual"><span class="tqual-dot"></span>Year 13 · Sixth Form</div><div class="tqual"><span class="tqual-dot"></span>Predicted A*A · Edexcel</div><div class="tqual"><span class="tqual-dot"></span>9 sessions · 4.9 ★</div><div class="tmeta"><div class="trate">£13<span>/hr</span></div><div class="tboard">Edexcel</div></div></div></div>
+      <div class="ad-wide"><div><div class="ad-wide-text">"Want your sessions seen first?"</div><div class="ad-wide-sub">Featured placements available · from £4.99/month</div></div><div style="display:flex;align-items:center;gap:20px"><span class="ad-cta" onclick="go('tutor-signup')" style="margin-top:0">Get featured →</span><div class="ad-label" style="position:static">Sponsored</div></div></div>
+    </div>
+  </section>
+
+  <div class="how">
+    <div class="hc"><div class="hnum">01</div><div class="htit">Filter &amp; Find</div><div class="htxt">Choose your level, exam board, and subject. Browse tutors who know your exact spec.</div></div>
+    <div class="hc"><div class="hnum">02</div><div class="htit">Book a Session</div><div class="htxt">One session or recurring. Pay securely via card or PayPal through Stripe. No hidden fees.</div></div>
+    <div class="hc"><div class="hnum">03</div><div class="htit">Learn &amp; Earn</div><div class="htxt">Students get results. Tutors build a brand and earn real money. One account does both.</div></div>
+  </div>
+
+  <footer>
+    <div class="fcol"><div class="flogo">Studly</div><div class="fcopy">Peer tutoring for<br>GCSE &amp; A Level.<br>UK-based. Est. 2025.</div></div>
+    <div class="fcol"><div class="fctit">Platform</div><ul class="flinks"><li><a onclick="go('hero')">Find a Tutor</a></li><li><a onclick="go('tutor-signup')">Become a Tutor</a></li></ul></div>
+    <div class="fcol"><div class="fctit">Subjects</div><ul class="flinks"><li><a>Maths &amp; Further Maths</a></li><li><a>Sciences</a></li><li><a>Humanities</a></li><li><a>Languages</a></li></ul></div>
+    <div class="fcol"><div class="fctit">Company</div><ul class="flinks"><li><a>About</a></li><li><a>Safety</a></li><li><a>Privacy Policy</a></li><li><a>Contact</a></li></ul></div>
+  </footer>
+</div>
+
+<!-- LOGIN -->
+<div class="page" id="login-page">
+  <div class="auth-wrap">
+    <div class="auth-left">
+      <div class="auth-left-logo" onclick="go('hero')">Studly</div>
+      <div class="auth-left-big">Welcome<br><em>back.</em></div>
+      <div class="auth-left-note">One account for both students and tutors. Switch roles anytime from your dashboard.</div>
+    </div>
+    <div class="auth-right">
+      <div class="auth-title">Log in</div>
+      <div class="auth-sub">Don't have an account? <span onclick="go('signup')">Create one free →</span></div>
+      <div class="auth-msg" id="login-msg"></div>
+      <div class="fg"><label class="fl">Email Address</label><input class="fi" id="login-email" type="email" placeholder="you@email.com"></div>
+      <div class="fg"><label class="fl">Password</label><input class="fi" id="login-password" type="password" placeholder="••••••••"></div>
+      <div style="text-align:right;margin:-8px 0 24px"><span style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--g4);cursor:pointer;border-bottom:1px solid var(--g3)">Forgot password?</span></div>
+      <button class="sbtn" id="login-btn" onclick="doLogin()">Log In</button>
+      <div style="margin-top:24px;text-align:center;font-size:11px;color:var(--g4)">New here? <span style="color:var(--black);cursor:pointer;text-decoration:underline" onclick="go('signup')">Create a free account</span></div>
+      <div style="margin-top:32px;padding-top:24px;border-top:var(--lnl);font-size:10px;color:var(--g4);text-align:center;line-height:1.8;">Secure login &nbsp;·&nbsp; Your data is never sold &nbsp;·&nbsp; Studly UK</div>
+    </div>
+  </div>
+</div>
+
+<!-- STUDENT SIGNUP -->
+<div class="page" id="signup-page">
+  <div class="auth-wrap">
+    <div class="auth-left">
+      <div class="auth-left-logo" onclick="go('hero')">Studly</div>
+      <div class="auth-left-big">One<br><em>account.</em><br>Two<br>roles.</div>
+      <div class="auth-left-note">Sign up as a student, a tutor, or both. Same login. Switch roles anytime.</div>
+    </div>
+    <div class="auth-right">
+      <div class="auth-title">Create your account</div>
+      <div class="auth-sub">Already have one? <span onclick="go('login')">Log in →</span></div>
+      <div class="auth-msg" id="signup-msg"></div>
+      <div style="margin-bottom:20px">
+        <label class="fl" style="margin-bottom:10px">I am joining as</label>
+        <div class="rtog">
+          <button class="rbtn on" onclick="rsel(this)">A Student</button>
+          <button class="rbtn" onclick="rsel(this)">A Tutor</button>
+          <button class="rbtn" onclick="rsel(this)">Both</button>
+        </div>
+      </div>
+      <div class="note-box">Your account works for both roles. Select "Both" to also complete your tutor profile after sign-up.</div>
+      <div class="fg-row">
+        <div><label class="fl">First Name</label><input class="fi" id="signup-first" type="text" placeholder="First"></div>
+        <div><label class="fl">Last Name</label><input class="fi" id="signup-last" type="text" placeholder="Last"></div>
+      </div>
+      <div class="fg"><label class="fl">Email Address</label><input class="fi" id="signup-email" type="email" placeholder="you@email.com"></div>
+      <div class="fg"><label class="fl">Password</label><input class="fi" id="signup-password" type="password" placeholder="8+ characters"></div>
+      <div class="fg">
+        <label class="fl">Year Group</label>
+        <select class="fi" id="signup-year">
+          <option value="">Select...</option>
+          <option>Year 10</option><option>Year 11</option><option>Year 12</option><option>Year 13</option>
+          <option>University Student</option><option>Graduate</option><option>Other</option>
+        </select>
+      </div>
+      <button class="sbtn" id="signup-btn" onclick="doSignup()">Create Account — It's Free</button>
+      <div style="margin-top:14px;font-size:10px;color:var(--g4);text-align:center;line-height:1.8;">By joining you agree to Studly's Terms &amp; Privacy Policy. No card required.</div>
+    </div>
+  </div>
+</div>
+
+<!-- TUTOR SIGNUP 3 STEPS -->
+<div class="page" id="tutor-signup-page">
+  <div class="onb-wrap" style="padding-top:56px">
+    <div class="onb-left">
+      <div class="onb-left-logo" onclick="go('hero')">Studly</div>
+      <ul class="onb-steps">
+        <li class="onb-step"><div class="onb-snum active" id="s1n">01</div><div><div class="onb-stit active" id="s1t">Your details</div><div class="onb-sdesc active" id="s1d">Name, email and password.</div></div></li>
+        <li class="onb-step"><div class="onb-snum" id="s2n">02</div><div><div class="onb-stit" id="s2t">Your profile</div><div class="onb-sdesc" id="s2d">Subjects, grades, boards and bio.</div></div></li>
+        <li class="onb-step"><div class="onb-snum" id="s3n">03</div><div><div class="onb-stit" id="s3t">Availability &amp; rate</div><div class="onb-sdesc" id="s3d">When you're free and what you charge.</div></div></li>
+      </ul>
+      <div class="onb-note">Free to join &nbsp;·&nbsp; Keep 90% of every session<br>No contracts &nbsp;·&nbsp; No minimums &nbsp;·&nbsp; Cancel anytime</div>
+    </div>
+    <div class="onb-right">
+      <div id="onb-s1">
+        <div class="onb-title">Let's get you set up.</div>
+        <div class="onb-sub">Under five minutes. No CV needed.</div>
+        <div class="auth-msg" id="tutor-msg"></div>
+        <div class="fg-row">
+          <div><label class="fl">First Name</label><input class="fi" id="t-first" type="text" placeholder="First"></div>
+          <div><label class="fl">Last Name</label><input class="fi" id="t-last" type="text" placeholder="Last"></div>
+        </div>
+        <div class="fg"><label class="fl">Email Address</label><input class="fi" id="t-email" type="email" placeholder="you@email.com"></div>
+        <div class="fg"><label class="fl">Password</label><input class="fi" id="t-password" type="password" placeholder="8+ characters"></div>
+        <div class="fg"><label class="fl">I am currently</label><select class="fi" id="t-year"><option value="">Select...</option><option>A Year 12 student</option><option>A Year 13 student</option><option>A university student</option><option>A graduate</option></select></div>
+        <button class="sbtn" id="tutor-s1-btn" onclick="doTutorSignup()">Continue to Step 2 →</button>
+        <div style="margin-top:14px;font-size:10px;color:var(--g4);text-align:center">Already have an account? <span style="color:var(--black);cursor:pointer;text-decoration:underline" onclick="go('login')">Log in</span></div>
+      </div>
+      <div id="onb-s2" style="display:none">
+        <div class="onb-title">Your tutor profile.</div>
+        <div class="onb-sub">This is what students see. Be specific — more detail means more bookings.</div>
+        <div class="fg"><label class="fl">Subjects you teach</label><div class="check-pills"><div class="cpill" onclick="tog(this)">Maths</div><div class="cpill" onclick="tog(this)">Further Maths</div><div class="cpill" onclick="tog(this)">English Lit</div><div class="cpill" onclick="tog(this)">English Lang</div><div class="cpill" onclick="tog(this)">History</div><div class="cpill" onclick="tog(this)">Physics</div><div class="cpill" onclick="tog(this)">Chemistry</div><div class="cpill" onclick="tog(this)">Biology</div><div class="cpill" onclick="tog(this)">Economics</div><div class="cpill" onclick="tog(this)">French</div><div class="cpill" onclick="tog(this)">Spanish</div><div class="cpill" onclick="tog(this)">German</div><div class="cpill" onclick="tog(this)">Computer Science</div><div class="cpill" onclick="tog(this)">Psychology</div><div class="cpill" onclick="tog(this)">Geography</div><div class="cpill" onclick="tog(this)">Sociology</div><div class="cpill" onclick="tog(this)">Other</div></div></div>
+        <div class="fg" style="margin-top:20px"><label class="fl">Levels you teach</label><div class="check-pills"><div class="cpill" onclick="tog(this)">GCSE</div><div class="cpill" onclick="tog(this)">A Level</div><div class="cpill" onclick="tog(this)">University Entry</div><div class="cpill" onclick="tog(this)">11+ / 13+</div></div></div>
+        <div class="fg" style="margin-top:20px"><label class="fl">Exam boards you cover</label><div class="check-pills"><div class="cpill" onclick="tog(this)">AQA</div><div class="cpill" onclick="tog(this)">Edexcel</div><div class="cpill" onclick="tog(this)">OCR</div><div class="cpill" onclick="tog(this)">WJEC</div><div class="cpill" onclick="tog(this)">CIE</div><div class="cpill" onclick="tog(this)">CCEA</div></div></div>
+        <div class="fg" style="margin-top:20px"><label class="fl">Your own grades</label><input class="fi" id="t-grades" type="text" placeholder="e.g. A* Maths AQA · A* Further Maths AQA"></div>
+        <div class="fg"><label class="fl">Short bio</label><textarea class="fi" id="t-bio" rows="4" style="resize:vertical;padding-top:8px" placeholder="Who you are, what you're studying, and how you approach sessions."></textarea></div>
+        <div class="fg"><label class="fl">Profile photo <em style="font-style:italic;text-transform:none;letter-spacing:0;font-size:10px">(optional)</em></label><div style="border:var(--lnl);padding:20px;text-align:center;cursor:pointer;color:var(--g4);font-size:11px;letter-spacing:0.1em;text-transform:uppercase" onmouseover="this.style.background='var(--g1)'" onmouseout="this.style.background='transparent'">Click to upload · JPG or PNG · Max 5MB</div></div>
+        <div style="display:flex;gap:12px"><button class="sbtn back-btn" onclick="onbNext(1)">← Back</button><button class="sbtn" style="flex:1" onclick="onbNext(3)">Continue to Step 3 →</button></div>
+      </div>
+      <div id="onb-s3" style="display:none">
+        <div class="onb-title">Availability &amp; pricing.</div>
+        <div class="onb-sub">You're in full control. Change anything anytime from your dashboard.</div>
+        <div class="fg"><label class="fl">Days you're available</label><div class="check-pills"><div class="cpill" onclick="tog(this)">Monday</div><div class="cpill" onclick="tog(this)">Tuesday</div><div class="cpill" onclick="tog(this)">Wednesday</div><div class="cpill" onclick="tog(this)">Thursday</div><div class="cpill" onclick="tog(this)">Friday</div><div class="cpill" onclick="tog(this)">Saturday</div><div class="cpill" onclick="tog(this)">Sunday</div></div></div>
+        <div class="fg" style="margin-top:20px"><label class="fl">Typical times</label><div class="check-pills"><div class="cpill" onclick="tog(this)">Morning (9am–12pm)</div><div class="cpill" onclick="tog(this)">Afternoon (12–5pm)</div><div class="cpill" onclick="tog(this)">Evening (5–9pm)</div></div></div>
+        <div class="fg" style="margin-top:20px"><label class="fl">Hourly rate (£)</label><input class="fi" id="t-rate" type="number" placeholder="e.g. 18" min="8" max="100" style="max-width:160px"><div style="font-size:10px;color:var(--g4);margin-top:8px;line-height:1.8">Year 12–13: £12–20 &nbsp;·&nbsp; University: £18–35 &nbsp;·&nbsp; Graduates: £25–50<br>Studly takes 10%. You keep 90%.</div></div>
+        <div class="fg"><label class="fl">Session types</label><div class="check-pills"><div class="cpill on" onclick="tog(this)">1-hour sessions</div><div class="cpill" onclick="tog(this)">90-minute sessions</div><div class="cpill" onclick="tog(this)">Block of 5</div><div class="cpill" onclick="tog(this)">One-off only</div></div></div>
+        <div class="fg"><label class="fl">Payment methods</label><div class="check-pills"><div class="cpill on" onclick="tog(this)">Card (Stripe)</div><div class="cpill on" onclick="tog(this)">PayPal</div></div></div>
+        <div class="note-box">Payment released to you within 24 hours of each completed session.</div>
+        <div style="display:flex;gap:12px"><button class="sbtn back-btn" onclick="onbNext(2)">← Back</button><button class="sbtn" style="flex:1" onclick="go('dashboard')">Finish — Launch My Profile →</button></div>
+        <div style="margin-top:14px;font-size:10px;color:var(--g4);text-align:center">Everything can be edited from your dashboard.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="page" id="dashboard-page">
+  <div style="padding-top:56px">
+    <div class="dash-header">
+      <div class="dash-greeting">Good to see you,<br><em id="dash-name">there.</em></div>
+      <div>
+        <div class="dash-tabs">
+          <button class="dash-tab on" onclick="dtab(this)">As Student</button>
+          <button class="dash-tab" onclick="dtab(this)">As Tutor</button>
+          <button class="dash-tab" onclick="dtab(this)">Settings</button>
+        </div>
+        <div style="text-align:right;margin-top:12px"><button class="btn-x" onclick="doLogout()">Log Out</button></div>
+      </div>
+    </div>
+    <div class="dash-body">
+      <div class="dash-main">
+        <div class="dash-sec">Upcoming Sessions</div>
+        <div style="font-size:12px;color:var(--g4);font-style:italic;padding:20px 0">No upcoming sessions yet. <span style="color:var(--black);cursor:pointer;text-decoration:underline" onclick="go('hero')">Browse tutors →</span></div>
+        <div class="dash-sec" style="margin-top:40px">Recent Activity</div>
+        <div style="font-size:12px;color:var(--g4);font-style:italic;padding:20px 0">Your session history will appear here.</div>
+      </div>
+      <div class="dash-side">
+        <div class="dash-card">
+          <div class="dash-card-num" id="dash-email-display">—</div>
+          <div class="dash-card-lbl">Your Account</div>
+        </div>
+        <div class="dash-card">
+          <div class="dash-card-num">£0</div>
+          <div class="dash-card-lbl">Earnings This Month</div>
+        </div>
+        <div style="margin-top:24px">
+          <button class="sbtn" onclick="go('tutor-signup')" style="margin-top:0">Complete Tutor Profile →</button>
+        </div>
+      </div>
+    </div>
+    <footer>
+      <div class="fcol"><div class="flogo">Studly</div><div class="fcopy">Peer tutoring for<br>GCSE &amp; A Level.<br>UK-based.</div></div>
+      <div class="fcol"><div class="fctit">Navigation</div><ul class="flinks"><li><a onclick="go('hero')">Browse Tutors</a></li><li><a onclick="doLogout()">Log Out</a></li></ul></div>
+      <div class="fcol"></div><div class="fcol"></div>
+    </footer>
+  </div>
+</div>
+
+<!-- PROFILE -->
+<div class="page" id="profile-page">
+  <div style="padding-top:56px">
+    <div class="breadcrumb" onclick="go('hero')">← Back to Browse</div>
+    <div class="phero">
+      <div class="pimg">ER</div>
+      <div class="pinf">
+        <div>
+          <div style="font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--g4);margin-bottom:14px">✦ Featured Tutor · Verified</div>
+          <div class="pname">Eleanor R.</div>
+          <div class="ptag">Oxford Mathematics, 2nd Year &nbsp;·&nbsp; A Level Maths &amp; Further Maths</div>
+          <div class="ptags"><span class="tag">AQA</span><span class="tag">Pure Maths</span><span class="tag">Mechanics</span><span class="tag">Statistics</span><span class="tag">A Level</span><span class="tag">GCSE</span></div>
+        </div>
+        <div class="prrw">
+          <div><div class="prn">From</div><div class="prate">£28<span style="font-family:var(--body);font-size:13px;color:var(--g4)">/hr</span></div></div>
+          <div style="font-size:12px;color:var(--g4);line-height:1.6"><div>★★★★★ 4.9</div><div style="font-size:10px;letter-spacing:0.08em">47 reviews</div></div>
+          <button class="bookbtn" onclick="go('login')">Book a Session</button>
+        </div>
+      </div>
+    </div>
+    <div class="pbody">
+      <div class="pmain">
+        <div class="pst">About Eleanor</div>
+        <p class="pbio">I'm currently reading Mathematics at Oxford (2nd year) and love breaking down problems that feel impossible at first glance. I got A* in both Maths and Further Maths at A Level with AQA, and I know the spec inside out.<br><br>I'm especially strong on pure content — proof, series, complex numbers, differential equations — as well as mechanics. I tailor every session to exactly what you need. Single sessions are absolutely fine.</p>
+        <div class="pst">Reviews</div>
+        <div class="rev"><div class="rstars">★★★★★</div><div class="rtxt">"Eleanor explained integration by parts in a way no teacher had managed."</div><div class="rauth">— Tom B., Year 13 · AQA Maths</div></div>
+        <div class="rev"><div class="rstars">★★★★★</div><div class="rtxt">"Really patient and clearly knows the content deeply. Spotted exactly where my method was going wrong."</div><div class="rauth">— Priya M., Year 12 · AQA Further Maths</div></div>
+        <div class="rev"><div class="rstars">★★★★☆</div><div class="rtxt">"Great session on vectors. Would book again before my A2 exams."</div><div class="rauth">— Dan H., Year 13</div></div>
+      </div>
+      <div class="psbar">
+        <div class="pst">Session Options</div>
+        <div class="sess-row"><span style="font-size:12px;color:var(--g5)">1 hour</span><span class="sess-price">£28</span></div>
+        <div class="sess-row"><span style="font-size:12px;color:var(--g5)">1.5 hours</span><span class="sess-price">£40</span></div>
+        <div class="sess-row"><span style="font-size:12px;color:var(--g5)">Block of 5</span><span class="sess-price">£120</span></div>
+        <div class="pst" style="margin-top:36px">Availability</div>
+        <div class="avail-row"><span>Monday</span><span class="avail-tag">Evening</span></div>
+        <div class="avail-row"><span>Wednesday</span><span class="avail-tag">Evening</span></div>
+        <div class="avail-row"><span>Saturday</span><span class="avail-tag">All day</span></div>
+        <div class="avail-row"><span>Sunday</span><span class="avail-tag">Morning</span></div>
+        <div class="pst" style="margin-top:36px">Qualifications</div>
+        <div style="font-size:12px;color:var(--g5);line-height:2.3"><div>A* A Level Maths · AQA</div><div>A* A Level Further Maths · AQA</div><div>Oxford Mathematics (2nd year)</div></div>
+        <div class="pst" style="margin-top:36px">Payment</div>
+        <div style="font-size:12px;color:var(--g5);line-height:2.2"><div>Card (Stripe)</div><div>PayPal</div><div style="font-size:10px;color:var(--g3);margin-top:4px;line-height:1.7">Held securely until session complete</div></div>
+        <button class="bookbtn" style="width:100%;margin-top:32px;text-align:center;display:block" onclick="go('login')">Book a Session</button>
+      </div>
+    </div>
+    <footer>
+      <div class="fcol"><div class="flogo">Studly</div><div class="fcopy">Peer tutoring for<br>GCSE &amp; A Level.<br>UK-based.</div></div>
+      <div class="fcol"><div class="fctit">Navigation</div><ul class="flinks"><li><a onclick="go('hero')">Back to Browse</a></li><li><a onclick="go('login')">Log In</a></li><li><a onclick="go('tutor-signup')">Become a Tutor</a></li></ul></div>
+      <div class="fcol"></div><div class="fcol"></div>
+    </footer>
+  </div>
+</div>
+
+</div>
+<script>
+// ── SUPABASE ──
+const _supabase = supabase.createClient(
+  'https://pqteekzbbuowmflhvzov.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBxdGVla3piYnVvd21mbGh2em92Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxNTQyMjAsImV4cCI6MjA5MDczMDIyMH0.WwtEirjkgnITOfDY_jqe6ZH40vQgNS-m7DDv4yaatRY'
+);
+
+// ── LOADER ──
+setTimeout(async()=>{
+  const l=document.getElementById('loader');
+  // Check if already logged in
+  const {data:{session}}=await _supabase.auth.getSession();
+  if(session){setLoggedIn(session.user);}
+  l.style.opacity='0';
+  setTimeout(()=>{l.style.display='none';document.getElementById('site').classList.add('visible');},800);
+},1800);
+
+// ── AUTH STATE ──
+_supabase.auth.onAuthStateChange((event,session)=>{
+  if(event==='SIGNED_IN'&&session){setLoggedIn(session.user);}
+  if(event==='SIGNED_OUT'){setLoggedOut();}
+});
+
+function setLoggedIn(user){
+  const nr=document.getElementById('nav-right');
+  const name=user.user_metadata?.first_name||user.email.split('@')[0];
+  nr.innerHTML=`<button class="btn-x" onclick="go('dashboard')">Dashboard</button><button class="btn-x btn-dark" onclick="doLogout()">Log Out</button>`;
+  document.getElementById('dash-name').textContent=name+'.';
+  document.getElementById('dash-email-display').textContent=user.email;
+}
+function setLoggedOut(){
+  document.getElementById('nav-right').innerHTML=`<button class="btn-x" onclick="go('login')">Log In</button><button class="btn-x btn-dark" onclick="go('signup')">Join Free</button>`;
+}
+
+// ── LOGIN ──
+async function doLogin(){
+  const btn=document.getElementById('login-btn');
+  const msg=document.getElementById('login-msg');
+  const email=document.getElementById('login-email').value.trim();
+  const pw=document.getElementById('login-password').value;
+  if(!email||!pw){showMsg(msg,'err','Please fill in all fields.');return;}
+  btn.disabled=true;btn.textContent='Logging in...';
+  const{error}=await _supabase.auth.signInWithPassword({email,password:pw});
+  btn.disabled=false;btn.textContent='Log In';
+  if(error){showMsg(msg,'err',error.message);return;}
+  go('dashboard');
+}
+
+// ── SIGNUP ──
+async function doSignup(){
+  const btn=document.getElementById('signup-btn');
+  const msg=document.getElementById('signup-msg');
+  const first=document.getElementById('signup-first').value.trim();
+  const last=document.getElementById('signup-last').value.trim();
+  const email=document.getElementById('signup-email').value.trim();
+  const pw=document.getElementById('signup-password').value;
+  if(!first||!last||!email||!pw){showMsg(msg,'err','Please fill in all fields.');return;}
+  if(pw.length<8){showMsg(msg,'err','Password must be at least 8 characters.');return;}
+  btn.disabled=true;btn.textContent='Creating account...';
+  const{error}=await _supabase.auth.signUp({
+    email,password:pw,
+    options:{data:{first_name:first,last_name:last,year_group:document.getElementById('signup-year').value}}
+  });
+  btn.disabled=false;btn.textContent='Create Account — It\'s Free';
+  if(error){showMsg(msg,'err',error.message);return;}
+  showMsg(msg,'ok','Account created! Check your email to confirm, then log in.');
+}
+
+// ── TUTOR SIGNUP (step 1 creates account) ──
+async function doTutorSignup(){
+  const btn=document.getElementById('tutor-s1-btn');
+  const msg=document.getElementById('tutor-msg');
+  const first=document.getElementById('t-first').value.trim();
+  const last=document.getElementById('t-last').value.trim();
+  const email=document.getElementById('t-email').value.trim();
+  const pw=document.getElementById('t-password').value;
+  if(!first||!last||!email||!pw){showMsg(msg,'err','Please fill in all fields.');return;}
+  if(pw.length<8){showMsg(msg,'err','Password must be at least 8 characters.');return;}
+  btn.disabled=true;btn.textContent='Creating account...';
+  const{error}=await _supabase.auth.signUp({
+    email,password:pw,
+    options:{data:{first_name:first,last_name:last,role:'tutor',year_group:document.getElementById('t-year').value}}
+  });
+  btn.disabled=false;btn.textContent='Continue to Step 2 →';
+  if(error){showMsg(msg,'err',error.message);return;}
+  showMsg(msg,'ok','Account created! Continue to set up your profile.');
+  setTimeout(()=>onbNext(2),1000);
+}
+
+// ── LOGOUT ──
+async function doLogout(){
+  await _supabase.auth.signOut();
+  go('hero');
+}
+
+// ── HELPERS ──
+function showMsg(el,type,text){
+  el.className='auth-msg '+type+' show';
+  el.textContent=text;
+}
+
+function go(id){
+  const t=document.getElementById('pt');
+  t.classList.add('in');
+  setTimeout(()=>{
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    const pg=document.getElementById(id+'-page');
+    if(pg)pg.classList.add('active');
+    window.scrollTo(0,0);
+    setTimeout(()=>t.classList.remove('in'),50);
+  },280);
+}
+
+function fp(g,el){document.querySelectorAll('#'+g+' .pill').forEach(p=>p.classList.remove('on'));el.classList.add('on');}
+function tog(el){el.classList.toggle('on');}
+function rsel(el){el.closest('.rtog').querySelectorAll('.rbtn').forEach(b=>b.classList.remove('on'));el.classList.add('on');}
+function dtab(el){el.closest('.dash-tabs').querySelectorAll('.dash-tab').forEach(t=>t.classList.remove('on'));el.classList.add('on');}
+
+function theme(t,el){
+  document.querySelectorAll('.swatch').forEach(s=>s.classList.remove('on'));el.classList.add('on');
+  const r=document.documentElement;
+  if(t==='w'){r.style.setProperty('--white','#fafaf8');r.style.setProperty('--g1','#f5f5f3');}
+  else if(t==='v'){r.style.setProperty('--white','#f9f7f0');r.style.setProperty('--g1','#f2efea');}
+  else{r.style.setProperty('--white','#eeece8');r.style.setProperty('--g1','#e4e2de');}
+}
+
+function onbNext(step){
+  [1,2,3].forEach(i=>{
+    document.getElementById('onb-s'+i).style.display='none';
+    const sn=document.getElementById('s'+i+'n');
+    const st=document.getElementById('s'+i+'t');
+    const sd=document.getElementById('s'+i+'d');
+    sn.className='onb-snum';st.className='onb-stit';sd.className='onb-sdesc';
+    if(i<step){sn.textContent='✓';sn.classList.add('done');}
+    else{sn.textContent='0'+i;}
+  });
+  document.getElementById('onb-s'+step).style.display='block';
+  document.getElementById('s'+step+'n').classList.add('active');
+  document.getElementById('s'+step+'t').classList.add('active');
+  document.getElementById('s'+step+'d').classList.add('active');
+  window.scrollTo(0,0);
+}
+</script>
+</body>
+</html>
