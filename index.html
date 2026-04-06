@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Studly — Peer &amp; Professional Tutoring · UK &amp; USA</title>
+<meta name="description" content="Studly — peer tutoring, professional tutoring and expert-led learning. GCSE, A Level, SAT, ACT, AP, IB, university applications and beyond. UK and USA.">
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://js.stripe.com/v3/"></script>
+<style>
+:root{--black:#0a0a0a;--white:#fafaf8;--g1:#f5f5f3;--g2:#e8e8e5;--g3:#c8c8c4;--g4:#888884;--g5:#444442;--serif:'Cormorant Garamond',Georgia,serif;--body:'Libre Baskerville',serif;--ln:1px solid #0a0a0a;--lnl:1px solid #e8e8e5;}
+*{margin:0;padding:0;box-sizing:border-box;}html{scroll-behavior:smooth;}
+body{font-family:var(--body);background:var(--white);color:var(--black);overflow-x:hidden;font-size:13px;line-height:1.6;}
+
+/* LOADER */
+#loader{position:fixed;inset:0;background:var(--white);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;}
+.loader-logo{font-family:var(--serif);font-size:56px;font-weight:300;letter-spacing:0.15em;opacity:0;animation:fadein 1.2s ease 0.3s forwards;}
+.loader-sub{font-size:10px;letter-spacing:0.22em;text-transform:uppercase;color:var(--g4);opacity:0;animation:fadein 1s ease 1s forwards;}
+@keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+#site{opacity:0;transition:opacity 0.6s ease;}
+#site.visible{opacity:1;}
+.pt{position:fixed;inset:0;background:var(--white);z-index:500;pointer-events:none;opacity:0;transition:opacity 0.28s ease;}
+.pt.in{opacity:1;}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:200;background:var(--white);border-bottom:var(--ln);display:flex;align-items:center;justify-content:space-between;padding:0 40px;height:56px;}
+.nav-logo{font-family:var(--serif);font-size:24px;font-weight:300;letter-spacing:0.12em;cursor:pointer;display:flex;align-items:center;gap:10px;}
+.nav-tag{font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--g4);border:1px solid var(--g3);padding:2px 7px;font-family:var(--body);}
+.nav-links{display:flex;align-items:center;gap:28px;list-style:none;}
+.nav-links a{text-decoration:none;color:var(--g4);font-size:11px;letter-spacing:0.11em;text-transform:uppercase;transition:color 0.2s;cursor:pointer;}
+.nav-links a:hover{color:var(--black);}
+.nav-right{display:flex;align-items:center;gap:10px;}
+.btn-x{font-family:var(--body);font-size:11px;letter-spacing:0.1em;text-transform:uppercase;border:var(--ln);padding:7px 18px;cursor:pointer;transition:all 0.2s;background:none;color:var(--black);}
+.btn-x:hover{background:var(--black);color:var(--white);}
+.btn-dark{background:var(--black);color:var(--white);}
+.btn-dark:hover{background:var(--g5)!important;}
+.theme-strip{position:fixed;top:56px;right:0;z-index:99;border-left:var(--ln);border-bottom:var(--ln);display:flex;background:var(--white);}
+.swatch{width:30px;height:26px;cursor:pointer;border-right:var(--ln);transition:transform 0.15s;position:relative;}
+.swatch:hover{transform:scaleY(1.1);}
+.swatch.on::after{content:'';position:absolute;bottom:3px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--black);}
+.page{display:none;min-height:100vh;}.page.active{display:block;}
+
+/* WELCOME MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(10,10,10,0.65);z-index:8000;display:flex;align-items:center;justify-content:center;padding:20px;}
+.modal-overlay.hidden{display:none;}
+.modal{background:var(--white);max-width:620px;width:100%;max-height:90vh;overflow-y:auto;border:var(--ln);}
+.modal-hdr{padding:30px 36px 18px;}
+.modal-title{font-family:var(--serif);font-size:clamp(22px,4vw,38px);font-weight:300;line-height:1;margin-bottom:8px;}
+.modal-title em{font-style:italic;}
+.modal-sub{font-size:12px;color:var(--g5);line-height:1.8;}
+.modal-body{padding:0 36px 18px;}
+.modal-section{margin-bottom:20px;padding-bottom:20px;border-bottom:var(--lnl);}
+.modal-section:last-child{border-bottom:none;margin-bottom:0;}
+.modal-sec-title{font-family:var(--serif);font-size:17px;font-weight:400;margin-bottom:12px;}
+.commission-table{width:100%;border-collapse:collapse;font-size:11px;}
+.commission-table th{text-align:left;padding:7px 10px;font-size:9px;letter-spacing:0.13em;text-transform:uppercase;color:var(--g4);border-bottom:var(--lnl);}
+.commission-table td{padding:9px 10px;border-bottom:var(--lnl);color:var(--g5);}
+.commission-table tr:last-child td{border-bottom:none;}
+.commission-table .hl{font-family:var(--serif);font-size:15px;color:var(--black);}
+.competitor-note{font-size:10px;color:var(--g4);font-style:italic;margin-top:10px;line-height:1.75;padding:10px 14px;background:var(--g1);border-left:2px solid var(--g3);}
+.promo-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--g2);border:1px solid var(--g2);}
+.promo-cell{background:var(--white);padding:14px;}
+.promo-cell-name{font-family:var(--serif);font-size:14px;margin-bottom:3px;}
+.promo-cell-price{font-family:var(--serif);font-size:18px;font-weight:300;margin-bottom:4px;}
+.promo-cell-note{font-size:10px;color:var(--g4);line-height:1.6;}
+.modal-footer{padding:16px 36px 28px;display:flex;gap:12px;}
+.modal-btn{font-family:var(--body);font-size:11px;letter-spacing:0.13em;text-transform:uppercase;padding:12px 22px;cursor:pointer;border:var(--ln);transition:all 0.2s;}
+.modal-btn-p{background:var(--black);color:var(--white);flex:1;}
+.modal-btn-p:hover{background:var(--g5);}
+.modal-btn-s{background:transparent;color:var(--black);}
+.modal-btn-s:hover{background:var(--g1);}
+
+/* PROMO MODAL */
+.pm{position:fixed;inset:0;background:rgba(10,10,10,0.7);z-index:7000;display:flex;align-items:center;justify-content:center;padding:20px;}
+.pm.hidden{display:none;}
+.pm-box{background:var(--white);max-width:500px;width:100%;border:var(--ln);}
+.pm-hdr{padding:20px 26px;border-bottom:var(--lnl);display:flex;justify-content:space-between;align-items:center;}
+.pm-title{font-family:var(--serif);font-size:20px;font-weight:300;}
+.pmc{font-size:18px;cursor:pointer;color:var(--g4);background:none;border:none;}
+.promo-option{border:var(--lnl);padding:15px;margin-bottom:10px;cursor:pointer;transition:all 0.2s;}
+.promo-option:hover,.promo-option.selected{border-color:var(--black);background:var(--g1);}
+.promo-option-name{font-family:var(--serif);font-size:15px;font-weight:400;margin-bottom:4px;}
+.promo-option-desc{font-size:11px;color:var(--g4);line-height:1.6;}
+
+/* BOOKING MODAL */
+.bm{position:fixed;inset:0;background:rgba(10,10,10,0.7);z-index:7000;display:flex;align-items:center;justify-content:center;padding:20px;}
+.bm.hidden{display:none;}
+.bm-box{background:var(--white);max-width:520px;width:100%;border:var(--ln);max-height:90vh;overflow-y:auto;}
+.book-warning{background:#fffbf0;border:1px solid #e8c84a;padding:11px 14px;font-size:11px;color:#7a6a00;line-height:1.75;margin-bottom:16px;}
+
+/* HOME */
+#hero-page{padding-top:56px;}
+.hero{display:grid;grid-template-columns:1fr 1fr;border-bottom:var(--ln);min-height:calc(100vh - 56px);}
+.hl{padding:68px 52px;border-right:var(--ln);display:flex;flex-direction:column;justify-content:space-between;}
+.eyebrow{font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--g4);margin-bottom:16px;}
+.ht{font-family:var(--serif);font-size:clamp(44px,6vw,90px);font-weight:300;line-height:0.95;letter-spacing:-0.02em;margin-bottom:20px;}
+.ht em{font-style:italic;}
+.hero-desc{font-size:12px;color:var(--g5);line-height:1.85;max-width:400px;margin-bottom:22px;padding:12px 16px;border-left:2px solid var(--g3);background:var(--g1);}
+.hero-desc strong{color:var(--black);}
+.hsub{font-size:11px;color:var(--g4);max-width:360px;line-height:1.8;margin-bottom:26px;letter-spacing:0.04em;}
+.hact{display:flex;flex-wrap:wrap;}
+.hbtn{font-family:var(--body);font-size:11px;letter-spacing:0.11em;text-transform:uppercase;padding:12px 22px;cursor:pointer;border:var(--ln);transition:all 0.2s;}
+.hbtn-p{background:var(--black);color:var(--white);margin-right:-1px;}
+.hbtn-p:hover{background:var(--g5);}
+.hbtn-s{background:transparent;color:var(--black);}
+.hbtn-s:hover{background:var(--g1);}
+.hr{display:flex;flex-direction:column;}
+.stat-row{display:grid;grid-template-columns:1fr 1fr;flex:1;}
+.stat{padding:30px 34px;border-bottom:var(--ln);border-right:var(--ln);}
+.stat:nth-child(2){border-right:none;}.stat:nth-child(3){border-bottom:none;}.stat:nth-child(4){border-bottom:none;border-right:none;}
+.snum{font-family:var(--serif);font-size:40px;font-weight:300;line-height:1;margin-bottom:6px;}
+.slbl{font-size:10px;letter-spacing:0.13em;text-transform:uppercase;color:var(--g4);}
+.slbl2{font-size:10px;color:var(--g4);margin-top:3px;line-height:1.6;}
+.type-strip{display:grid;grid-template-columns:1fr 1fr 1fr;border-bottom:var(--ln);}
+.type-col{padding:38px 30px;border-right:var(--ln);}
+.type-col:last-child{border-right:none;}
+.type-tag{font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--g4);margin-bottom:12px;}
+.type-title{font-family:var(--serif);font-size:22px;font-weight:400;margin-bottom:9px;}
+.type-desc{font-size:11px;color:var(--g5);line-height:1.85;}
+.type-examples{margin-top:11px;display:flex;flex-wrap:wrap;gap:5px;}
+.type-ex{font-size:9px;letter-spacing:0.09em;text-transform:uppercase;border:var(--lnl);padding:3px 9px;color:var(--g4);}
+.commission-strip{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:var(--ln);background:var(--black);color:var(--white);}
+.cs-col{padding:20px 24px;border-right:1px solid #1c1c1c;text-align:center;}
+.cs-col:last-child{border-right:none;}
+.cs-num{font-family:var(--serif);font-size:28px;font-weight:300;margin-bottom:4px;}
+.cs-lbl{font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--g4);}
+.cs-note{font-size:10px;color:var(--g4);margin-top:3px;font-style:italic;}
+.promote-banner{background:var(--black);color:var(--white);padding:12px 40px;border-bottom:var(--ln);align-items:center;justify-content:space-between;display:none;}
+.promote-banner.show{display:flex;}
+.promote-banner-text{font-family:var(--serif);font-size:14px;font-style:italic;}
+.promote-banner-sub{font-size:10px;color:var(--g4);margin-top:2px;}
+.promote-banner-btn{font-family:var(--body);font-size:10px;letter-spacing:0.12em;text-transform:uppercase;padding:7px 18px;border:1px solid var(--white);background:transparent;color:var(--white);cursor:pointer;transition:all 0.2s;flex-shrink:0;}
+.promote-banner-btn:hover{background:var(--white);color:var(--black);}
+.join-strip{background:var(--g1);display:grid;grid-template-columns:1fr 1fr 1fr 1fr;border-bottom:var(--ln);}
+.jcol{padding:38px 28px;border-right:var(--lnl);}
+.jcol:last-child{border-right:none;display:flex;flex-direction:column;justify-content:center;}
+.jtag{font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--g4);margin-bottom:12px;}
+.jnum{font-family:var(--serif);font-size:44px;font-weight:300;line-height:1;color:var(--g3);margin-bottom:10px;}
+.jtit{font-family:var(--serif);font-size:17px;font-weight:400;margin-bottom:7px;}
+.jtxt{font-size:11px;color:var(--g5);line-height:1.85;}
+.jcta{font-family:var(--body);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;padding:11px 20px;background:var(--black);color:var(--white);border:var(--ln);cursor:pointer;transition:all 0.2s;margin-bottom:8px;}
+.jcta:hover{background:var(--g5);}
+.jsub{font-size:10px;color:var(--g4);line-height:1.8;}
+.region-bar{display:flex;border-bottom:var(--ln);}
+.region-tab{flex:1;padding:12px;text-align:center;font-family:var(--body);font-size:11px;letter-spacing:0.11em;text-transform:uppercase;cursor:pointer;border-right:var(--ln);transition:all 0.2s;color:var(--g4);}
+.region-tab:last-child{border-right:none;}
+.region-tab.on{background:var(--black);color:var(--white);}
+.filters{border-bottom:var(--ln);}
+.frow{display:flex;align-items:center;border-bottom:var(--lnl);}
+.frow:last-child{border-bottom:none;}
+.flbl{padding:9px 15px;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--g4);border-right:var(--lnl);min-width:110px;white-space:nowrap;}
+.pills{display:flex;overflow-x:auto;scrollbar-width:none;padding:7px 11px;gap:5px;flex:1;}
+.pills::-webkit-scrollbar{display:none;}
+.pill{font-family:var(--body);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;padding:4px 11px;border:var(--lnl);background:transparent;cursor:pointer;white-space:nowrap;transition:all 0.15s;color:var(--black);}
+.pill:hover,.pill.on{background:var(--black);color:var(--white);border-color:var(--black);}
+.mbar{overflow:hidden;border-bottom:var(--ln);padding:9px 0;background:var(--black);}
+.minner{display:flex;gap:32px;animation:mq 36s linear infinite;white-space:nowrap;width:max-content;}
+@keyframes mq{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.mi{font-family:var(--serif);font-size:13px;font-weight:300;letter-spacing:0.09em;color:var(--white);font-style:italic;}
+.md{color:#444;font-style:normal;}
+.sec-hdr{display:flex;align-items:center;justify-content:space-between;padding:18px 40px;border-bottom:var(--ln);}
+.sec-t{font-family:var(--serif);font-size:22px;font-weight:300;}
+.sec-m{font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--g4);}
+.tgrid{display:grid;grid-template-columns:repeat(4,1fr);}
+.tc{border-right:var(--ln);border-bottom:var(--ln);cursor:pointer;transition:background 0.2s;overflow:hidden;}
+.tc:nth-child(4n){border-right:none;}
+.tc:hover{background:var(--g1);}
+.tcimg{width:100%;aspect-ratio:1/1;background:var(--g2);border-bottom:var(--ln);display:flex;align-items:flex-end;padding:10px;position:relative;overflow:hidden;}
+.tcimg-initials{font-family:var(--serif);font-size:44px;font-weight:300;color:var(--g3);position:absolute;bottom:-5px;right:9px;line-height:1;}
+.fbadge{position:relative;z-index:2;font-size:7px;letter-spacing:0.16em;text-transform:uppercase;padding:3px 7px;display:inline-block;}
+.peer-badge{background:var(--g5);color:var(--white);}
+.pro-badge{background:var(--black);color:var(--white);}
+.tc-promoted{border-right:var(--ln);border-bottom:var(--ln);overflow:hidden;background:var(--black);color:var(--white);display:flex;flex-direction:column;cursor:pointer;transition:opacity 0.2s;}
+.tc-promoted:hover{opacity:0.88;}
+.tc-promoted-badge{font-size:7px;letter-spacing:0.17em;text-transform:uppercase;padding:8px 13px;border-bottom:1px solid #1c1c1c;color:var(--g4);}
+.tc-promoted-body{padding:16px;flex:1;display:flex;flex-direction:column;justify-content:space-between;}
+.tc-promoted-name{font-family:var(--serif);font-size:18px;color:var(--white);margin-bottom:3px;}
+.tc-promoted-subj{font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--g4);margin-bottom:8px;}
+.tc-promoted-desc{font-size:11px;color:var(--g4);line-height:1.7;margin-bottom:12px;}
+.tc-promoted-rate{font-family:var(--serif);font-size:19px;color:var(--white);}
+.tc-promoted-rate span{font-size:11px;color:var(--g4);}
+.tcb{padding:12px 14px 14px;}
+.tname{font-family:var(--serif);font-size:16px;font-weight:400;margin-bottom:2px;}
+.tsubj{font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--g4);margin-bottom:5px;}
+.tdesc{font-size:11px;color:var(--g5);line-height:1.7;margin-bottom:8px;}
+.tqual{font-size:10px;color:var(--g4);margin-bottom:3px;display:flex;align-items:center;gap:5px;}
+.tqual-dot{width:3px;height:3px;border-radius:50%;background:var(--g3);flex-shrink:0;}
+.tmeta{display:flex;justify-content:space-between;align-items:flex-end;margin-top:9px;padding-top:8px;border-top:var(--lnl);}
+.trate{font-family:var(--serif);font-size:16px;font-weight:300;}
+.trate span{font-family:var(--body);font-size:10px;color:var(--g4);}
+.tboard{font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--g4);border:var(--lnl);padding:2px 7px;}
+.ad-spot{border-right:var(--ln);border-bottom:var(--ln);position:relative;display:flex;flex-direction:column;justify-content:flex-end;padding:16px;background:var(--g1);}
+.ad-label{position:absolute;top:10px;right:10px;font-size:7px;letter-spacing:0.16em;text-transform:uppercase;color:var(--g3);}
+.ad-inner{font-family:var(--serif);font-size:13px;font-weight:300;color:var(--g4);font-style:italic;line-height:1.5;}
+.ad-cta{margin-top:9px;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--g4);border-bottom:1px solid var(--g3);padding-bottom:2px;display:inline-block;cursor:pointer;transition:color 0.2s;}
+.ad-cta:hover{color:var(--black);}
+.ad-wide{grid-column:span 2;border-right:var(--ln);border-bottom:var(--ln);display:flex;align-items:center;justify-content:space-between;padding:18px 26px;background:var(--g1);}
+.ad-wide-text{font-family:var(--serif);font-size:14px;font-weight:300;font-style:italic;color:var(--g5);}
+.ad-wide-sub{font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--g4);margin-top:4px;}
+.empty-state{grid-column:span 3;padding:56px 40px;text-align:center;border-bottom:var(--ln);}
+.empty-title{font-family:var(--serif);font-size:22px;font-weight:300;margin-bottom:9px;}
+.empty-sub{font-size:12px;color:var(--g4);line-height:1.8;max-width:320px;margin:0 auto 20px;}
+.how{display:grid;grid-template-columns:repeat(3,1fr);border-top:var(--ln);}
+.hc{padding:44px 32px;border-right:var(--ln);}
+.hc:last-child{border-right:none;}
+.hnum{font-family:var(--serif);font-size:60px;font-weight:300;color:var(--g2);line-height:1;margin-bottom:14px;}
+.htit{font-family:var(--serif);font-size:19px;font-weight:400;margin-bottom:8px;}
+.htxt{font-size:12px;color:var(--g5);line-height:1.9;}
+footer{border-top:var(--ln);display:grid;grid-template-columns:1.2fr 1fr 1fr 1fr 1fr;}
+.fcol{padding:32px 26px;border-right:var(--ln);}
+.fcol:last-child{border-right:none;}
+.fctit{font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--g4);margin-bottom:13px;}
+.flinks{list-style:none;}
+.flinks li{margin-bottom:8px;}
+.flinks a{font-size:12px;color:var(--g5);text-decoration:none;cursor:pointer;transition:color 0.2s;}
+.flinks a:hover{color:var(--black);}
+.flogo{font-family:var(--serif);font-size:28px;font-weight:300;letter-spacing:0.1em;margin-bottom:10px;}
+.fcopy{font-size:10px;color:var(--g4);line-height:1.85;}
+.fcopy a{color:var(--g4);text-decoration:none;}
+.fcopy a:hover{color:var(--black);}
+
+/* AUTH */
+.auth-wrap{display:flex;min-height:calc(100vh - 56px);padding-top:56px;}
+.auth-left{width:360px;flex-shrink:0;border-right:var(--ln);padding:52px 44px;display:flex;flex-direction:column;justify-content:space-between;background:var(--black);}
+.auth-left-logo{font-family:var(--serif);font-size:22px;font-weight:300;letter-spacing:0.12em;color:var(--white);cursor:pointer;margin-bottom:0;}
+.auth-left-big{font-family:var(--serif);font-size:clamp(30px,4vw,52px);font-weight:300;line-height:1;letter-spacing:-0.02em;color:var(--white);}
+.auth-left-big em{font-style:italic;}
+.auth-left-note{font-size:11px;color:var(--g4);line-height:1.85;max-width:220px;}
+.auth-right{flex:1;padding:48px 44px;display:flex;flex-direction:column;justify-content:center;max-width:480px;}
+.auth-title{font-family:var(--serif);font-size:26px;font-weight:300;margin-bottom:6px;}
+.auth-sub{font-size:11px;color:var(--g4);margin-bottom:24px;line-height:1.7;}
+.auth-sub span{color:var(--black);cursor:pointer;text-decoration:underline;}
+.fg{margin-bottom:14px;}
+.fg-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
+.fl{display:block;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--g4);margin-bottom:7px;}
+.fi{width:100%;border:none;border-bottom:var(--ln);padding:8px 0;font-family:var(--body);font-size:13px;background:transparent;color:var(--black);outline:none;transition:border-bottom 0.2s;}
+.fi:focus{border-bottom:2px solid var(--black);}
+.fi::placeholder{color:var(--g3);}
+select.fi{cursor:pointer;appearance:none;}
+.sbtn{width:100%;padding:11px;font-family:var(--body);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;background:var(--black);color:var(--white);border:var(--ln);cursor:pointer;margin-top:8px;transition:all 0.2s;}
+.sbtn:hover{background:var(--g5);}
+.sbtn:disabled{background:var(--g3);border-color:var(--g3);cursor:not-allowed;}
+.rtog{display:flex;margin-bottom:16px;border:var(--ln);}
+.rbtn{flex:1;padding:8px;font-family:var(--body);font-size:10px;letter-spacing:0.09em;text-transform:uppercase;border:none;background:transparent;cursor:pointer;transition:all 0.2s;color:var(--g4);}
+.rbtn.on{background:var(--black);color:var(--white);}
+.note-box{background:var(--g1);border-left:2px solid var(--g3);padding:10px 13px;font-size:11px;color:var(--g5);line-height:1.75;margin-bottom:16px;}
+.auth-msg{padding:10px 12px;font-size:11px;line-height:1.7;margin-bottom:13px;display:none;}
+.auth-msg.err{background:#fff0f0;border-left:2px solid #cc0000;color:#cc0000;}
+.auth-msg.ok{background:#f0fff4;border-left:2px solid #00aa44;color:#00aa44;}
+.auth-msg.show{display:block;}
+.check-pills{display:flex;flex-wrap:wrap;gap:6px;margin-top:5px;}
+.cpill{font-family:var(--body);font-size:10px;letter-spacing:0.06em;padding:4px 10px;border:var(--lnl);background:transparent;cursor:pointer;transition:all 0.15s;color:var(--g5);user-select:none;}
+.cpill.on{background:var(--black);color:var(--white);border-color:var(--black);}
+.terms-check{display:flex;align-items:flex-start;gap:9px;margin-top:12px;margin-bottom:6px;}
+.terms-check input{margin-top:3px;flex-shrink:0;width:13px;height:13px;cursor:pointer;accent-color:var(--black);}
+.terms-check label{font-size:10px;color:var(--g4);line-height:1.7;cursor:pointer;}
+.terms-check label span{color:var(--black);text-decoration:underline;}
+
+/* ONBOARDING */
+#tutor-signup-page{padding-top:56px;}
+.onb-wrap{display:grid;grid-template-columns:300px 1fr;min-height:calc(100vh - 56px);}
+.onb-left{background:var(--black);padding:48px 36px;display:flex;flex-direction:column;border-right:var(--ln);}
+.onb-left-logo{font-family:var(--serif);font-size:20px;font-weight:300;letter-spacing:0.12em;color:var(--white);cursor:pointer;margin-bottom:32px;}
+.onb-steps{list-style:none;flex:1;}
+.onb-step{display:flex;align-items:flex-start;gap:11px;padding:14px 0;border-bottom:1px solid #1a1a1a;}
+.onb-step:last-child{border-bottom:none;}
+.onb-snum{font-family:var(--serif);font-size:22px;font-weight:300;color:#2a2a2a;line-height:1;flex-shrink:0;width:28px;transition:color 0.3s;}
+.onb-snum.active{color:var(--white);}
+.onb-snum.done{color:var(--g4);font-size:12px;padding-top:4px;}
+.onb-stit{font-family:var(--serif);font-size:14px;font-weight:400;color:#333;margin-bottom:2px;transition:color 0.3s;}
+.onb-stit.active{color:var(--white);}
+.onb-sdesc{font-size:10px;color:#333;line-height:1.7;transition:color 0.3s;}
+.onb-sdesc.active{color:var(--g4);}
+.onb-note{font-size:10px;color:var(--g4);line-height:1.85;margin-top:24px;padding-top:16px;border-top:1px solid #1a1a1a;}
+.onb-right{padding:48px;overflow-y:auto;}
+.onb-title{font-family:var(--serif);font-size:26px;font-weight:300;margin-bottom:8px;}
+.onb-sub{font-size:12px;color:var(--g4);margin-bottom:26px;line-height:1.75;}
+.back-btn{background:transparent;color:var(--black);flex:0 0 auto;width:auto;padding:11px 16px;}
+
+/* DASHBOARD */
+#dashboard-page{padding-top:56px;}
+.dash-header{padding:26px 38px;border-bottom:var(--ln);display:flex;justify-content:space-between;align-items:flex-end;}
+.dash-greeting{font-family:var(--serif);font-size:clamp(18px,3vw,36px);font-weight:300;line-height:1.1;}
+.dash-greeting em{font-style:italic;}
+.dash-tabs{display:flex;border:var(--ln);}
+.dash-tab{font-family:var(--body);font-size:10px;letter-spacing:0.09em;text-transform:uppercase;padding:8px 16px;border-right:var(--ln);background:transparent;cursor:pointer;color:var(--g4);transition:all 0.2s;}
+.dash-tab:last-child{border-right:none;}
+.dash-tab.on{background:var(--black);color:var(--white);}
+.dash-panel{display:none;}
+.dash-panel.on{display:grid;grid-template-columns:2fr 1fr;border-bottom:var(--ln);}
+.dash-main{padding:26px 38px;border-right:var(--ln);}
+.dash-side{padding:24px 28px;}
+.dash-sec{font-family:var(--serif);font-size:16px;font-weight:400;margin-bottom:12px;padding-bottom:8px;border-bottom:var(--lnl);}
+.dash-card{border:var(--lnl);padding:16px;margin-bottom:13px;}
+.dash-card-num{font-family:var(--serif);font-size:32px;font-weight:300;line-height:1;margin-bottom:4px;}
+.dash-card-lbl{font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--g4);}
+.dash-empty{font-size:12px;color:var(--g4);font-style:italic;padding:12px 0;line-height:1.8;}
+.dash-row{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:var(--lnl);}
+.dash-row:last-child{border-bottom:none;}
+.dash-name-s{font-family:var(--serif);font-size:15px;font-weight:400;margin-bottom:3px;}
+.dash-meta{font-size:10px;color:var(--g4);letter-spacing:0.08em;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);border:var(--lnl);margin-top:10px;}
+.cal-day-hdr{padding:5px;text-align:center;font-size:9px;letter-spacing:0.09em;text-transform:uppercase;color:var(--g4);border-right:var(--lnl);border-bottom:var(--lnl);}
+.cal-day-hdr:last-child{border-right:none;}
+.cal-cell{padding:5px;border-right:var(--lnl);border-bottom:var(--lnl);min-height:40px;}
+.cal-cell:nth-child(7n){border-right:none;}
+.cal-cell.today{background:var(--g1);}
+.cal-cell.today .cal-date{color:var(--black);font-weight:700;}
+.cal-date{font-size:10px;color:var(--g4);}
+
+/* CHAT */
+#chat-page{padding-top:56px;}
+.chat-wrap{display:grid;grid-template-columns:230px 1fr;height:calc(100vh - 56px);}
+.chat-list{border-right:var(--ln);overflow-y:auto;}
+.chat-list-hdr{padding:14px 16px;border-bottom:var(--ln);font-family:var(--serif);font-size:14px;font-weight:400;}
+.chat-main{display:flex;flex-direction:column;}
+.chat-hdr{padding:11px 20px;border-bottom:var(--ln);display:flex;align-items:center;justify-content:space-between;}
+.chat-hdr-name{font-family:var(--serif);font-size:16px;font-weight:400;}
+.chat-hdr-note{font-size:10px;color:var(--g4);margin-top:2px;}
+.chat-book-btn{font-family:var(--body);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;padding:7px 15px;border:var(--ln);background:transparent;cursor:pointer;transition:all 0.2s;}
+.chat-book-btn:hover{background:var(--black);color:var(--white);}
+.chat-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;}
+.msg{max-width:70%;padding:10px 13px;font-size:12px;line-height:1.7;}
+.msg.them{background:var(--g1);align-self:flex-start;}
+.msg.me{background:var(--black);color:var(--white);align-self:flex-end;}
+.msg-meta{font-size:9px;color:var(--g4);margin-top:3px;}
+.msg.me .msg-meta{color:var(--g3);text-align:right;}
+.chat-notice{background:#fffbf0;border:1px solid #e8c84a;padding:8px 13px;font-size:10px;color:#7a6a00;text-align:center;line-height:1.7;}
+.chat-input-row{padding:10px 20px;border-top:var(--ln);display:flex;gap:9px;align-items:flex-end;}
+.chat-input{flex:1;border:none;border-bottom:var(--ln);padding:8px 0;font-family:var(--body);font-size:13px;background:transparent;color:var(--black);outline:none;resize:none;}
+.chat-send{font-family:var(--body);font-size:10px;letter-spacing:0.09em;text-transform:uppercase;padding:8px 16px;background:var(--black);color:var(--white);border:var(--ln);cursor:pointer;transition:all 0.2s;flex-shrink:0;}
+.chat-send:hover{background:var(--g5);}
+#info-page{padding-top:56px;}
+</style>
+</head>
+<body>
+
+<!-- WELCOME MODAL -->
+<div class="modal-overlay hidden" id="welcome-modal">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div style="font-family:var(--serif);font-size:28px;font-weight:300;letter-spacing:0.1em;margin-bottom:14px;">Studly</div>
+      <div class="modal-title">Welcome to<br><em>Studly.</em></div>
+      <div class="modal-sub">Dynamic and flexible tutoring for a dynamic and adapting world. Peer tutoring, professional tutoring, or anything you want to learn — one platform, every subject, UK and USA.</div>
+    </div>
+    <div class="modal-body">
+      <div class="modal-section">
+        <div class="modal-sec-title">How tutor commission works</div>
+        <table class="commission-table">
+          <tr><th>Sessions taught</th><th>Studly takes</th><th>You keep</th><th>Market comparison</th></tr>
+          <tr><td>1–5 sessions</td><td class="hl">10%</td><td>90%</td><td>vs. 25–40% on other platforms</td></tr>
+          <tr><td>6–15 sessions</td><td class="hl">8%</td><td>92%</td><td>vs. 25–40% on other platforms</td></tr>
+          <tr><td>16–30 sessions</td><td class="hl">6%</td><td>94%</td><td>vs. 25–40% on other platforms</td></tr>
+          <tr><td>30+ sessions</td><td class="hl">5%</td><td>95%</td><td>Lowest rate on the market</td></tr>
+        </table>
+        <div class="competitor-note">Most tutoring platforms take 25–40% per session. Studly starts at 10% and drops to 5% — free to join, no contracts.</div>
+      </div>
+      <div class="modal-section">
+        <div class="modal-sec-title">Promote your profile (optional)</div>
+        <div class="promo-grid">
+          <div class="promo-cell"><div class="promo-cell-name">Basic</div><div class="promo-cell-price">£3.99<span style="font-size:11px;color:var(--g4)">/mo</span></div><div class="promo-cell-note">Appear higher in search results</div></div>
+          <div class="promo-cell"><div class="promo-cell-name">Featured</div><div class="promo-cell-price">£6.99<span style="font-size:11px;color:var(--g4)">/mo</span></div><div class="promo-cell-note">Featured badge + top of grid</div></div>
+          <div class="promo-cell"><div class="promo-cell-name">Premium</div><div class="promo-cell-price">£9.99<span style="font-size:11px;color:var(--g4)">/mo</span></div><div class="promo-cell-note">Top slot + banner across site</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-btn modal-btn-s" onclick="closeWelcome()">Browse Tutors</button>
+      <button class="modal-btn modal-btn-p" onclick="closeWelcome();go('signup')">Join Free →</button>
+    </div>
+  </div>
+</div>
+
+<!-- PROMO MODAL -->
+<div class="pm hidden" id="promo-modal">
+  <div class="pm-box">
+    <div class="pm-hdr"><div class="pm-title">Promote your profile</div><button class="pmc" onclick="document.getElementById('promo-modal').classList.add('hidden')">✕</button></div>
+    <div style="padding:18px 24px;">
+      <div class="promo-option" onclick="selectPromo(this)"><div class="promo-option-name">Basic — £3.99/month</div><div class="promo-option-desc">Your profile appears higher in search results. Good for new tutors building their first reviews.</div></div>
+      <div class="promo-option" onclick="selectPromo(this)"><div class="promo-option-name">Featured — £6.99/month</div><div class="promo-option-desc">Featured badge on your card and placed at the top of the tutor grid. Significantly more visibility.</div></div>
+      <div class="promo-option" onclick="selectPromo(this)"><div class="promo-option-name">Premium — £9.99/month</div><div class="promo-option-desc">Top slot in the grid plus your name in the promoted banner shown to all visitors.</div></div>
+    </div>
+    <div style="padding:13px 24px 20px;border-top:var(--lnl);">
+      <button class="sbtn" style="margin-top:0" onclick="document.getElementById('promo-modal').classList.add('hidden');go('login')">Continue to Payment →</button>
+      <div style="font-size:10px;color:var(--g4);text-align:center;margin-top:9px;line-height:1.7">Cancel anytime · Billed monthly · Processed via Stripe</div>
+    </div>
+  </div>
+</div>
+
+<!-- BOOKING MODAL -->
+<div class="bm hidden" id="book-modal">
+  <div class="bm-box">
+    <div style="padding:18px 24px;border-bottom:var(--lnl);display:flex;justify-content:space-between;align-items:center;">
+      <div style="font-family:var(--serif);font-size:19px;font-weight:300;" id="book-modal-title">Book a Session</div>
+      <button class="pmc" onclick="closeBookModal()">✕</button>
+    </div>
+
+    <!-- STEP 1: Session details -->
+    <div id="book-step-1" style="padding:18px 24px;">
+      <div class="book-warning"><strong>⚠ All sessions must be booked and paid through Studly.</strong> Arranging sessions outside the platform violates your agreement and may result in permanent account suspension.</div>
+      <div style="font-family:var(--serif);font-size:16px;font-weight:400;margin-bottom:16px;" id="book-tutor-name">Booking a session</div>
+      <div class="fg"><label class="fl">Session Type</label>
+        <select class="fi" id="book-type">
+          <option value="">Select...</option>
+          <option value="1-hour">1-hour session</option>
+          <option value="90-min">90-minute session</option>
+          <option value="block-5">Block of 5 sessions</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">Preferred Date</label><input class="fi" type="date" id="book-date"></div>
+      <div class="fg"><label class="fl">Preferred Time</label>
+        <select class="fi" id="book-time">
+          <option value="">Select...</option>
+          <option>Morning (9am–12pm)</option>
+          <option>Afternoon (12pm–5pm)</option>
+          <option>Evening (5pm–9pm)</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">What do you need help with?</label>
+        <textarea class="fi" id="book-notes" rows="3" style="resize:vertical;padding-top:7px" placeholder="Be specific — e.g. integration by parts, essay structure, SAT math section 3"></textarea>
+      </div>
+      <div id="book-price-display" style="font-family:var(--serif);font-size:28px;font-weight:300;margin-bottom:16px;padding:16px;background:var(--g1);border-left:2px solid var(--g3);">
+        <span id="book-price-amount">—</span>
+        <div style="font-size:11px;color:var(--g4);font-family:var(--body);margin-top:4px;">Select session type to see price</div>
+      </div>
+    </div>
+
+    <!-- STEP 2: Payment -->
+    <div id="book-step-2" style="display:none;padding:18px 24px;">
+      <div style="font-family:var(--serif);font-size:16px;font-weight:400;margin-bottom:16px;">Payment Details</div>
+      <div id="stripe-card-element" style="border:none;border-bottom:var(--ln);padding:10px 0;margin-bottom:16px;"></div>
+      <div id="stripe-error" style="color:#cc0000;font-size:11px;margin-bottom:12px;display:none;"></div>
+      <div style="font-size:10px;color:var(--g4);line-height:1.8;margin-bottom:16px;padding:10px 14px;background:var(--g1);border-left:2px solid var(--g3);">
+        You will not be charged until the tutor confirms the session. Payment is held securely by Stripe and released to the tutor after the session is complete.
+      </div>
+    </div>
+
+    <!-- STEP 3: Confirmed -->
+    <div id="book-step-3" style="display:none;padding:32px 24px;text-align:center;">
+      <div style="font-family:var(--serif);font-size:32px;font-weight:300;margin-bottom:12px;">Booking sent.</div>
+      <div style="font-size:12px;color:var(--g4);line-height:1.8;max-width:320px;margin:0 auto 24px;">Your booking request has been sent to the tutor. They will confirm within 24 hours and you'll see it in your dashboard.</div>
+      <button class="sbtn" style="max-width:200px;margin:0 auto" onclick="closeBookModal();go('dashboard')">View Dashboard →</button>
+    </div>
+
+    <div style="padding:13px 24px 20px;border-top:var(--lnl);" id="book-footer">
+      <button class="sbtn" style="margin-top:0" id="book-next-btn" onclick="bookNext()">Continue to Payment →</button>
+      <div style="font-size:10px;color:var(--g4);text-align:center;margin-top:9px;" id="book-footer-note">Secure payment via Stripe</div>
+    </div>
+  </div>
+</div>
+
+<div id="loader">
+  <div class="loader-logo">Studly</div>
+  <div class="loader-sub">Dynamic &amp; Flexible Tutoring · UK &amp; USA</div>
+</div>
+<div class="pt" id="pt"></div>
+<div id="site">
+
+<nav>
+  <div class="nav-logo" onclick="go('hero')">
+    <span>Studly</span>
+    <span class="nav-tag">UK &amp; USA</span>
+  </div>
+  <ul class="nav-links">
+    <li><a onclick="go('hero')">Find a Tutor</a></li>
+    <li><a onclick="go('tutor-signup')">Teach</a></li>
+    <li><a onclick="requireAuth('chat')">Messages</a></li>
+    <li><a onclick="go('info')">Rates &amp; Info</a></li>
+  </ul>
+  <div class="nav-right" id="nav-right">
+    <button class="btn-x" onclick="go('login')">Log In</button>
+    <button class="btn-x btn-dark" onclick="go('signup')">Join Free</button>
+  </div>
+</nav>
+
+<div class="theme-strip">
+  <div class="swatch on" style="background:#fafaf8" onclick="theme('w',this)"></div>
+  <div class="swatch" style="background:#f9f7f0" onclick="theme('v',this)"></div>
+  <div class="swatch" style="background:#e8e8e5" onclick="theme('g',this)"></div>
+</div>
+
+<!-- HOME -->
+<div class="page active" id="hero-page">
+  <div class="promote-banner" id="promote-banner">
+    <div><div class="promote-banner-text">Boost your visibility — get more bookings.</div><div class="promote-banner-sub">Promoted tutor placements from £3.99/month · Cancel anytime</div></div>
+    <button class="promote-banner-btn" onclick="document.getElementById('promo-modal').classList.remove('hidden')">Promote My Profile →</button>
+  </div>
+  <section class="hero">
+    <div class="hl">
+      <div class="eyebrow">Dynamic &amp; Flexible Tutoring for a Dynamic and Adapting World</div>
+      <div>
+        <div class="ht">Learn<br><em>anything,</em><br>from<br>anyone.</div>
+        <div class="hero-desc">Studly connects students with <strong>peer tutors</strong> who aced the same exams, <strong>professional tutors</strong> with formal teaching experience, and <strong>independent experts</strong> in anything you want to learn. One platform — flexible, affordable, built for the world we actually live in.</div>
+        <p class="hsub">GCSE · A Level · SAT · ACT · AP · IB · University Applications · Languages · Skills · Anything</p>
+      </div>
+      <div class="hact">
+        <button class="hbtn hbtn-p" onclick="document.getElementById('ts').scrollIntoView({behavior:'smooth'})">Browse Tutors</button>
+        <button class="hbtn hbtn-s" onclick="go('tutor-signup')">Start Teaching</button>
+        <button class="hbtn hbtn-s" onclick="openWelcome()" style="margin-left:-1px">Rates &amp; Info</button>
+      </div>
+    </div>
+    <div class="hr">
+      <div class="stat-row">
+        <div class="stat"><div class="snum">UK</div><div class="slbl">GCSE · A Level · IB</div><div class="slbl2">AQA · Edexcel · OCR · WJEC · CIE · CCEA · SQA</div></div>
+        <div class="stat"><div class="snum">USA</div><div class="slbl">SAT · ACT · AP · IB</div><div class="slbl2">College prep · University applications</div></div>
+        <div class="stat"><div class="snum">90%</div><div class="slbl">Tutors keep</div><div class="slbl2">Rising to 95% at 30+ sessions</div></div>
+        <div class="stat"><div class="snum">Any</div><div class="slbl">Subject or skill</div><div class="slbl2">If you can teach it, list it</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="type-strip">
+    <div class="type-col"><div class="type-tag">Option 01</div><div class="type-title">Peer Tutoring</div><div class="type-desc">Students and recent graduates who sat the same exams. Affordable, relatable and often the most effective — they know exactly what the examiner wants.</div><div class="type-examples"><span class="type-ex">GCSE</span><span class="type-ex">A Level</span><span class="type-ex">SAT</span><span class="type-ex">ACT</span><span class="type-ex">AP</span><span class="type-ex">IB</span></div></div>
+    <div class="type-col"><div class="type-tag">Option 02</div><div class="type-title">Professional Tutoring</div><div class="type-desc">Qualified teachers, subject experts and graduates with formal teaching experience. Structured, thorough — ideal for deep subject knowledge or specialist needs.</div><div class="type-examples"><span class="type-ex">All Levels</span><span class="type-ex">Specialist</span><span class="type-ex">SEN</span><span class="type-ex">Oxbridge Prep</span></div></div>
+    <div class="type-col"><div class="type-tag">Option 03</div><div class="type-title">Anything Goes</div><div class="type-desc">Languages, instruments, coding, interview prep, creative writing, life skills — if you can teach it, list it. Not just for exams. For anyone who wants to learn anything from anyone.</div><div class="type-examples"><span class="type-ex">UK</span><span class="type-ex">USA</span><span class="type-ex">International</span><span class="type-ex">Online</span></div></div>
+  </section>
+
+  <section class="commission-strip">
+    <div class="cs-col"><div class="cs-num">10%</div><div class="cs-lbl">Sessions 1–5</div><div class="cs-note">You keep 90%</div></div>
+    <div class="cs-col"><div class="cs-num">8%</div><div class="cs-lbl">Sessions 6–15</div><div class="cs-note">You keep 92%</div></div>
+    <div class="cs-col"><div class="cs-num">6%</div><div class="cs-lbl">Sessions 16–30</div><div class="cs-note">You keep 94%</div></div>
+    <div class="cs-col"><div class="cs-num">5%</div><div class="cs-lbl">Sessions 30+</div><div class="cs-note">Lowest rate on the market</div></div>
+  </section>
+
+  <section class="join-strip">
+    <div class="jcol"><div class="jtag">Become a Tutor</div><div style="font-family:var(--serif);font-size:20px;font-weight:300;line-height:1.15;margin-bottom:10px;">Three steps.<br><em>That's it.</em></div><div class="jtxt">Peer tutor, professional or independent expert — anyone can join. Your rate, your schedule, your brand.</div></div>
+    <div class="jcol"><div class="jnum">01</div><div class="jtit">Create your profile</div><div class="jtxt">Add subjects, qualifications and a bio. Set your own rate. Photo optional.</div></div>
+    <div class="jcol"><div class="jnum">02</div><div class="jtit">Set availability</div><div class="jtxt">Pick when you're free. Accept or decline any request. No minimums, no commitment.</div></div>
+    <div class="jcol"><div class="jnum">03</div><div class="jtit">Get paid. Grow.</div><div class="jtxt">Payment via Stripe after every session. The more you teach, the less we take.</div><br><button class="jcta" onclick="go('tutor-signup')">Start Teaching →</button><div class="jsub">Free to join · Keep 90–95% · No contracts</div></div>
+  </section>
+
+  <div class="region-bar">
+    <div class="region-tab on" id="tab-uk" onclick="switchRegion('uk')">🇬🇧 United Kingdom</div>
+    <div class="region-tab" id="tab-us" onclick="switchRegion('us')">🇺🇸 United States</div>
+    <div class="region-tab" id="tab-other" onclick="switchRegion('other')">🌍 International &amp; Anything Goes</div>
+  </div>
+
+  <section class="filters" id="filters-uk">
+    <div class="frow"><div class="flbl">Tutor Type</div><div class="pills" id="uk-type"><button class="pill on" onclick="fp('uk-type',this)">All</button><button class="pill" onclick="fp('uk-type',this)">Peer</button><button class="pill" onclick="fp('uk-type',this)">Professional</button><button class="pill" onclick="fp('uk-type',this)">Independent Expert</button></div></div>
+    <div class="frow"><div class="flbl">Level</div><div class="pills" id="uk-lp"><button class="pill on" onclick="fp('uk-lp',this)">All Levels</button><button class="pill" onclick="fp('uk-lp',this)">GCSE</button><button class="pill" onclick="fp('uk-lp',this)">A Level</button><button class="pill" onclick="fp('uk-lp',this)">AS Level</button><button class="pill" onclick="fp('uk-lp',this)">IB</button><button class="pill" onclick="fp('uk-lp',this)">Pre-U</button><button class="pill" onclick="fp('uk-lp',this)">University Entry</button><button class="pill" onclick="fp('uk-lp',this)">Oxbridge Prep</button><button class="pill" onclick="fp('uk-lp',this)">11+</button><button class="pill" onclick="fp('uk-lp',this)">13+</button><button class="pill" onclick="fp('uk-lp',this)">Primary</button></div></div>
+    <div class="frow"><div class="flbl">Exam Board</div><div class="pills" id="uk-bp"><button class="pill on" onclick="fp('uk-bp',this)">All Boards</button><button class="pill" onclick="fp('uk-bp',this)">AQA</button><button class="pill" onclick="fp('uk-bp',this)">Edexcel</button><button class="pill" onclick="fp('uk-bp',this)">OCR</button><button class="pill" onclick="fp('uk-bp',this)">WJEC</button><button class="pill" onclick="fp('uk-bp',this)">Eduqas</button><button class="pill" onclick="fp('uk-bp',this)">CIE / Cambridge</button><button class="pill" onclick="fp('uk-bp',this)">CCEA</button><button class="pill" onclick="fp('uk-bp',this)">CAIE</button><button class="pill" onclick="fp('uk-bp',this)">SQA (Scotland)</button><button class="pill" onclick="fp('uk-bp',this)">IBO</button></div></div>
+    <div class="frow"><div class="flbl">Subject</div><div class="pills" id="uk-sp"><button class="pill on" onclick="fp('uk-sp',this)">All</button><button class="pill" onclick="fp('uk-sp',this)">Maths</button><button class="pill" onclick="fp('uk-sp',this)">Further Maths</button><button class="pill" onclick="fp('uk-sp',this)">English Lit</button><button class="pill" onclick="fp('uk-sp',this)">English Lang</button><button class="pill" onclick="fp('uk-sp',this)">History</button><button class="pill" onclick="fp('uk-sp',this)">Physics</button><button class="pill" onclick="fp('uk-sp',this)">Chemistry</button><button class="pill" onclick="fp('uk-sp',this)">Biology</button><button class="pill" onclick="fp('uk-sp',this)">Economics</button><button class="pill" onclick="fp('uk-sp',this)">Business Studies</button><button class="pill" onclick="fp('uk-sp',this)">French</button><button class="pill" onclick="fp('uk-sp',this)">Spanish</button><button class="pill" onclick="fp('uk-sp',this)">German</button><button class="pill" onclick="fp('uk-sp',this)">Latin</button><button class="pill" onclick="fp('uk-sp',this)">Computer Science</button><button class="pill" onclick="fp('uk-sp',this)">Psychology</button><button class="pill" onclick="fp('uk-sp',this)">Sociology</button><button class="pill" onclick="fp('uk-sp',this)">Geography</button><button class="pill" onclick="fp('uk-sp',this)">Politics</button><button class="pill" onclick="fp('uk-sp',this)">Philosophy</button><button class="pill" onclick="fp('uk-sp',this)">Art &amp; Design</button><button class="pill" onclick="fp('uk-sp',this)">Music</button><button class="pill" onclick="fp('uk-sp',this)">Drama</button><button class="pill" onclick="fp('uk-sp',this)">Religious Studies</button><button class="pill" onclick="fp('uk-sp',this)">Media Studies</button><button class="pill" onclick="fp('uk-sp',this)">PE / Sport</button></div></div>
+  </section>
+
+  <section class="filters" id="filters-us" style="display:none">
+    <div class="frow"><div class="flbl">Tutor Type</div><div class="pills" id="us-type"><button class="pill on" onclick="fp('us-type',this)">All</button><button class="pill" onclick="fp('us-type',this)">Peer</button><button class="pill" onclick="fp('us-type',this)">Professional</button></div></div>
+    <div class="frow"><div class="flbl">Test / Level</div><div class="pills" id="us-lp"><button class="pill on" onclick="fp('us-lp',this)">All</button><button class="pill" onclick="fp('us-lp',this)">SAT</button><button class="pill" onclick="fp('us-lp',this)">ACT</button><button class="pill" onclick="fp('us-lp',this)">PSAT / NMSQT</button><button class="pill" onclick="fp('us-lp',this)">AP Exams</button><button class="pill" onclick="fp('us-lp',this)">IB</button><button class="pill" onclick="fp('us-lp',this)">ISEE / SSAT</button><button class="pill" onclick="fp('us-lp',this)">University Application</button><button class="pill" onclick="fp('us-lp',this)">Common App Essay</button><button class="pill" onclick="fp('us-lp',this)">High School</button><button class="pill" onclick="fp('us-lp',this)">Middle School</button><button class="pill" onclick="fp('us-lp',this)">Elementary</button></div></div>
+    <div class="frow"><div class="flbl">Subject / Test</div><div class="pills" id="us-sp"><button class="pill on" onclick="fp('us-sp',this)">All</button><button class="pill" onclick="fp('us-sp',this)">SAT Math</button><button class="pill" onclick="fp('us-sp',this)">SAT Reading &amp; Writing</button><button class="pill" onclick="fp('us-sp',this)">ACT Math</button><button class="pill" onclick="fp('us-sp',this)">ACT Science</button><button class="pill" onclick="fp('us-sp',this)">ACT English</button><button class="pill" onclick="fp('us-sp',this)">ACT Reading</button><button class="pill" onclick="fp('us-sp',this)">AP Calculus AB</button><button class="pill" onclick="fp('us-sp',this)">AP Calculus BC</button><button class="pill" onclick="fp('us-sp',this)">AP Statistics</button><button class="pill" onclick="fp('us-sp',this)">AP Chemistry</button><button class="pill" onclick="fp('us-sp',this)">AP Physics 1</button><button class="pill" onclick="fp('us-sp',this)">AP Physics C</button><button class="pill" onclick="fp('us-sp',this)">AP Biology</button><button class="pill" onclick="fp('us-sp',this)">AP US History</button><button class="pill" onclick="fp('us-sp',this)">AP World History</button><button class="pill" onclick="fp('us-sp',this)">AP English Lang</button><button class="pill" onclick="fp('us-sp',this)">AP English Lit</button><button class="pill" onclick="fp('us-sp',this)">AP Economics (Micro)</button><button class="pill" onclick="fp('us-sp',this)">AP Economics (Macro)</button><button class="pill" onclick="fp('us-sp',this)">AP Psychology</button><button class="pill" onclick="fp('us-sp',this)">AP Computer Science</button><button class="pill" onclick="fp('us-sp',this)">College Essay</button><button class="pill" onclick="fp('us-sp',this)">Algebra</button><button class="pill" onclick="fp('us-sp',this)">Geometry</button><button class="pill" onclick="fp('us-sp',this)">Precalculus</button><button class="pill" onclick="fp('us-sp',this)">Trigonometry</button></div></div>
+  </section>
+
+  <section class="filters" id="filters-other" style="display:none">
+    <div class="frow"><div class="flbl">Category</div><div class="pills" id="ot-cat"><button class="pill on" onclick="fp('ot-cat',this)">All</button><button class="pill" onclick="fp('ot-cat',this)">Languages</button><button class="pill" onclick="fp('ot-cat',this)">Music &amp; Arts</button><button class="pill" onclick="fp('ot-cat',this)">Coding &amp; Tech</button><button class="pill" onclick="fp('ot-cat',this)">Interview Prep</button><button class="pill" onclick="fp('ot-cat',this)">University Application</button><button class="pill" onclick="fp('ot-cat',this)">Creative Writing</button><button class="pill" onclick="fp('ot-cat',this)">Business &amp; Finance</button><button class="pill" onclick="fp('ot-cat',this)">Life Skills</button><button class="pill" onclick="fp('ot-cat',this)">Sports &amp; Fitness</button><button class="pill" onclick="fp('ot-cat',this)">Other</button></div></div>
+    <div class="frow"><div class="flbl">Region</div><div class="pills" id="ot-reg"><button class="pill on" onclick="fp('ot-reg',this)">Anywhere</button><button class="pill" onclick="fp('ot-reg',this)">UK</button><button class="pill" onclick="fp('ot-reg',this)">USA</button><button class="pill" onclick="fp('ot-reg',this)">Europe</button><button class="pill" onclick="fp('ot-reg',this)">Online Only</button></div></div>
+  </section>
+
+  <div class="mbar"><div class="minner"><span class="mi">Maths</span><span class="md"> · </span><span class="mi">SAT Prep</span><span class="md"> · </span><span class="mi">English Literature</span><span class="md"> · </span><span class="mi">ACT Science</span><span class="md"> · </span><span class="mi">History</span><span class="md"> · </span><span class="mi">AP Calculus</span><span class="md"> · </span><span class="mi">Further Maths</span><span class="md"> · </span><span class="mi">University Application</span><span class="md"> · </span><span class="mi">Chemistry</span><span class="md"> · </span><span class="mi">College Essay</span><span class="md"> · </span><span class="mi">French</span><span class="md"> · </span><span class="mi">AP US History</span><span class="md"> · </span><span class="mi">Economics</span><span class="md"> · </span><span class="mi">Coding</span><span class="md"> · </span><span class="mi">Biology</span><span class="md"> · </span><span class="mi">Spanish</span><span class="md"> · </span><span class="mi">AP Physics</span><span class="md"> · </span><span class="mi">Maths</span><span class="md"> · </span><span class="mi">SAT Prep</span><span class="md"> · </span><span class="mi">English Literature</span><span class="md"> · </span><span class="mi">AP Calculus</span><span class="md"> · </span></div></div>
+
+  <section id="ts">
+    <div class="sec-hdr"><div class="sec-t">Browse Tutors</div><div class="sec-m">Be the first to join</div></div>
+    <div class="tgrid">
+      <div class="tc-promoted" onclick="document.getElementById('promo-modal').classList.remove('hidden')">
+        <div class="tc-promoted-badge">✦ Promoted Slot — Available</div>
+        <div class="tc-promoted-body"><div><div class="tc-promoted-name">Your Profile Here</div><div class="tc-promoted-subj">Featured · Top of Results</div><div class="tc-promoted-desc">Be the first to claim the top spot. Premium tutors appear here across every search and filter.</div></div><div class="tc-promoted-rate">£9.99<span>/month to feature</span></div></div>
+      </div>
+      <div class="empty-state"><div class="empty-title">No tutors yet — <em>be the first.</em></div><div class="empty-sub">Studly is just getting started. Sign up as a tutor and your profile appears right here for students across the UK, USA and beyond.</div><button class="hbtn hbtn-p" onclick="go('tutor-signup')" style="display:inline-block;margin:0 auto">Start Teaching →</button></div>
+    </div>
+  </section>
+
+  <div class="how">
+    <div class="hc"><div class="hnum">01</div><div class="htit">Filter &amp; Find</div><div class="htxt">Peer or professional, UK GCSE and A Level, US SAT, ACT and AP, university applications, or anything else — all in one place with clean, fast filters.</div></div>
+    <div class="hc"><div class="hnum">02</div><div class="htit">Message &amp; Book</div><div class="htxt">Chat before committing. All bookings and payments go through Studly — keeping every session protected and tutors paid fairly.</div></div>
+    <div class="hc"><div class="hnum">03</div><div class="htit">Learn &amp; Earn</div><div class="htxt">Students get results. Tutors keep up to 95% and build their own brand. The more you teach, the less commission we take — lowest rate on the market.</div></div>
+  </div>
+
+  <footer>
+    <div class="fcol"><div class="flogo">Studly</div><div class="fcopy">Dynamic &amp; flexible tutoring<br>for a dynamic world.<br>UK &amp; USA · Est. 2025.<br><br>Inquiries:<br><a href="/cdn-cgi/l/email-protection#196a6d6c7d756037706d597e74787075377a7674"><span class="__cf_email__" data-cfemail="fc8f8889989085d29588bc9b919d9590d29f9391">[email&#160;protected]</span></a></div></div>
+    <div class="fcol"><div class="fctit">Platform</div><ul class="flinks"><li><a onclick="go('hero')">Find a Tutor</a></li><li><a onclick="go('tutor-signup')">Become a Tutor</a></li><li><a onclick="go('info')">Rates &amp; Info</a></li><li><a onclick="openWelcome()">Welcome Guide</a></li></ul></div>
+    <div class="fcol"><div class="fctit">United Kingdom</div><ul class="flinks"><li><a>GCSE</a></li><li><a>A Level</a></li><li><a>IB</a></li><li><a>University Entry</a></li><li><a>Oxbridge Prep</a></li></ul></div>
+    <div class="fcol"><div class="fctit">United States</div><ul class="flinks"><li><a>SAT Prep</a></li><li><a>ACT Prep</a></li><li><a>AP Courses</a></li><li><a>College Essay</a></li><li><a>University Application</a></li></ul></div>
+    <div class="fcol"><div class="fctit">Company</div><ul class="flinks"><li><a>About</a></li><li><a>Safety</a></li><li><a>Privacy Policy</a></li><li><a href="/cdn-cgi/l/email-protection#9eedeaebfaf2e7b0f7eadef9f3fff7f2b0fdf1f3">Contact</a></li></ul></div>
+  </footer>
+</div>
+
+<!-- LOGIN -->
+<div class="page" id="login-page">
+  <div class="auth-wrap">
+    <div class="auth-left">
+      <div class="auth-left-logo" onclick="go('hero')">Studly</div>
+      <div class="auth-left-big">Welcome<br><em>back.</em></div>
+      <div class="auth-left-note">One account. Student, tutor, or both. UK, USA and beyond.</div>
+    </div>
+    <div class="auth-right">
+      <div class="auth-title">Log in</div>
+      <div class="auth-sub">No account? <span onclick="go('signup')">Create one free →</span></div>
+      <div class="auth-msg" id="login-msg"></div>
+      <div class="fg"><label class="fl">Email Address</label><input class="fi" id="login-email" type="email" placeholder="you@email.com"></div>
+      <div class="fg"><label class="fl">Password</label><input class="fi" id="login-password" type="password" placeholder="••••••••"></div>
+      <div style="text-align:right;margin:-3px 0 14px"><span style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--g4);cursor:pointer;border-bottom:1px solid var(--g3)">Forgot password?</span></div>
+      <button class="sbtn" id="login-btn" onclick="doLogin()">Log In</button>
+      <div style="margin-top:14px;text-align:center;font-size:11px;color:var(--g4)">New here? <span style="color:var(--black);cursor:pointer;text-decoration:underline" onclick="go('signup')">Create a free account</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- SIGNUP -->
+<div class="page" id="signup-page">
+  <div class="auth-wrap">
+    <div class="auth-left">
+      <div class="auth-left-logo" onclick="go('hero')">Studly</div>
+      <div class="auth-left-big">One<br><em>account.</em><br>Two<br>roles.</div>
+      <div class="auth-left-note">Student, tutor, or both. Same login. Switch anytime.</div>
+    </div>
+    <div class="auth-right">
+      <div class="auth-title">Create your account</div>
+      <div class="auth-sub">Already have one? <span onclick="go('login')">Log in →</span></div>
+      <div class="auth-msg" id="signup-msg"></div>
+      <div style="margin-bottom:14px"><label class="fl" style="margin-bottom:8px">I am joining as</label>
+        <div class="rtog" id="signup-role-tog">
+          <button class="rbtn on" onclick="rsel(this,'signup-role-tog')">A Student</button>
+          <button class="rbtn" onclick="rsel(this,'signup-role-tog')">A Tutor</button>
+          <button class="rbtn" onclick="rsel(this,'signup-role-tog')">Both</button>
+        </div>
+      </div>
+      <div class="note-box">One account works for both roles. Tutors keep 90–95% — most generous rate on the market.</div>
+      <div class="fg-row">
+        <div><label class="fl">First Name</label><input class="fi" id="signup-first" type="text" placeholder="First"></div>
+        <div><label class="fl">Last Name</label><input class="fi" id="signup-last" type="text" placeholder="Last"></div>
+      </div>
+      <div class="fg"><label class="fl">Email Address</label><input class="fi" id="signup-email" type="email" placeholder="you@email.com"></div>
+      <div class="fg"><label class="fl">Password</label><input class="fi" id="signup-password" type="password" placeholder="8+ characters"></div>
+      <div class="fg"><label class="fl">Region</label><select class="fi" id="signup-region"><option value="">Select...</option><option>United Kingdom</option><option>United States</option><option>Other</option></select></div>
+      <div class="terms-check"><input type="checkbox" id="signup-terms"><label for="signup-terms">I agree to Studly's <span>Terms of Service</span> and <span>Privacy Policy</span>. I understand all sessions must be booked and paid through Studly.</label></div>
+      <button class="sbtn" id="signup-btn" onclick="doSignup()">Create Account — It's Free</button>
+      <div style="margin-top:9px;font-size:10px;color:var(--g4);text-align:center">No card required · <a href="/cdn-cgi/l/email-protection#ccbfb8b9a8a0b5e2a5b88caba1ada5a0e2afa3a1" style="color:var(--g4)"><span class="__cf_email__" data-cfemail="c5b6b1b0a1a9bcebacb185a2a8a4aca9eba6aaa8">[email&#160;protected]</span></a></div>
+    </div>
+  </div>
+</div>
+
+<!-- TUTOR SIGNUP -->
+<div class="page" id="tutor-signup-page">
+  <div class="onb-wrap" style="padding-top:56px">
+    <div class="onb-left">
+      <div class="onb-left-logo" onclick="go('hero')">Studly</div>
+      <ul class="onb-steps">
+        <li class="onb-step"><div class="onb-snum active" id="s1n">01</div><div><div class="onb-stit active" id="s1t">Your details</div><div class="onb-sdesc active" id="s1d">Name, email and password.</div></div></li>
+        <li class="onb-step"><div class="onb-snum" id="s2n">02</div><div><div class="onb-stit" id="s2t">Your profile</div><div class="onb-sdesc" id="s2d">Subjects, type, grades and bio.</div></div></li>
+        <li class="onb-step"><div class="onb-snum" id="s3n">03</div><div><div class="onb-stit" id="s3t">Availability &amp; rate</div><div class="onb-sdesc" id="s3d">When you're free and what you charge.</div></div></li>
+      </ul>
+      <div class="onb-note">Free to join · Keep 90–95%<br>No contracts · Commission drops as you teach more<br><br><a href="/cdn-cgi/l/email-protection#33404746575f4a1d5a4773545e525a5f1d505c5e" style="color:var(--g4)"><span class="__cf_email__" data-cfemail="fb888f8e9f9782d5928fbb9c969a9297d5989496">[email&#160;protected]</span></a></div>
+    </div>
+    <div class="onb-right">
+      <div id="onb-s1">
+        <div class="onb-title">Let's get you set up.</div>
+        <div class="onb-sub">Under five minutes. No CV needed.</div>
+        <div class="auth-msg" id="tutor-msg"></div>
+        <div class="fg-row"><div><label class="fl">First Name</label><input class="fi" id="t-first" type="text" placeholder="First"></div><div><label class="fl">Last Name</label><input class="fi" id="t-last" type="text" placeholder="Last"></div></div>
+        <div class="fg"><label class="fl">Email</label><input class="fi" id="t-email" type="email" placeholder="you@email.com"></div>
+        <div class="fg"><label class="fl">Password</label><input class="fi" id="t-password" type="password" placeholder="8+ characters"></div>
+        <div class="fg"><label class="fl">I am currently</label><select class="fi" id="t-year"><option value="">Select...</option><option>A Year 12 student (UK)</option><option>A Year 13 student (UK)</option><option>A university student (UK)</option><option>A graduate (UK)</option><option>A high school student (US)</option><option>A college student (US)</option><option>A graduate (US)</option><option>A qualified teacher / professional</option><option>An independent expert</option></select></div>
+        <div class="terms-check"><input type="checkbox" id="tutor-terms"><label for="tutor-terms">I agree to Studly's <span>Tutor Terms</span>. I am self-employed and responsible for my own tax. I will not arrange or accept payment for sessions outside the Studly platform. Studly takes 10% commission, reducing to 5% at 30+ sessions.</label></div>
+        <button class="sbtn" id="tutor-s1-btn" onclick="doTutorSignup()">Continue to Step 2 →</button>
+        <div style="margin-top:11px;font-size:10px;color:var(--g4);text-align:center">Already have an account? <span style="color:var(--black);cursor:pointer;text-decoration:underline" onclick="go('login')">Log in</span></div>
+      </div>
+      <div id="onb-s2" style="display:none">
+        <div class="onb-title">Your tutor profile.</div>
+        <div class="onb-sub">This is exactly what students see. Specific beats vague every time.</div>
+        <div class="fg"><label class="fl">I am a</label><div class="rtog" id="tutor-type-tog"><button class="rbtn on" onclick="rsel(this,'tutor-type-tog')">Peer Tutor</button><button class="rbtn" onclick="rsel(this,'tutor-type-tog')">Professional</button><button class="rbtn" onclick="rsel(this,'tutor-type-tog')">Independent Expert</button></div></div>
+        <div class="fg"><label class="fl">Region</label><div class="check-pills"><div class="cpill" onclick="tog(this)">United Kingdom</div><div class="cpill" onclick="tog(this)">United States</div><div class="cpill" onclick="tog(this)">Online (both)</div><div class="cpill" onclick="tog(this)">International</div></div></div>
+        <div class="fg" style="margin-top:13px"><label class="fl">UK Subjects</label><div class="check-pills"><div class="cpill" onclick="tog(this)">Maths</div><div class="cpill" onclick="tog(this)">Further Maths</div><div class="cpill" onclick="tog(this)">English Lit</div><div class="cpill" onclick="tog(this)">English Lang</div><div class="cpill" onclick="tog(this)">History</div><div class="cpill" onclick="tog(this)">Physics</div><div class="cpill" onclick="tog(this)">Chemistry</div><div class="cpill" onclick="tog(this)">Biology</div><div class="cpill" onclick="tog(this)">Economics</div><div class="cpill" onclick="tog(this)">Business Studies</div><div class="cpill" onclick="tog(this)">French</div><div class="cpill" onclick="tog(this)">Spanish</div><div class="cpill" onclick="tog(this)">German</div><div class="cpill" onclick="tog(this)">Latin</div><div class="cpill" onclick="tog(this)">Computer Science</div><div class="cpill" onclick="tog(this)">Psychology</div><div class="cpill" onclick="tog(this)">Sociology</div><div class="cpill" onclick="tog(this)">Geography</div><div class="cpill" onclick="tog(this)">Politics</div><div class="cpill" onclick="tog(this)">Philosophy</div><div class="cpill" onclick="tog(this)">Art &amp; Design</div><div class="cpill" onclick="tog(this)">Music</div><div class="cpill" onclick="tog(this)">Drama</div><div class="cpill" onclick="tog(this)">Religious Studies</div><div class="cpill" onclick="tog(this)">Media Studies</div></div></div>
+        <div class="fg" style="margin-top:11px"><label class="fl">US Subjects / Tests</label><div class="check-pills"><div class="cpill" onclick="tog(this)">SAT Math</div><div class="cpill" onclick="tog(this)">SAT Reading &amp; Writing</div><div class="cpill" onclick="tog(this)">ACT Math</div><div class="cpill" onclick="tog(this)">ACT Science</div><div class="cpill" onclick="tog(this)">ACT English</div><div class="cpill" onclick="tog(this)">PSAT</div><div class="cpill" onclick="tog(this)">AP Calculus AB</div><div class="cpill" onclick="tog(this)">AP Calculus BC</div><div class="cpill" onclick="tog(this)">AP Statistics</div><div class="cpill" onclick="tog(this)">AP Chemistry</div><div class="cpill" onclick="tog(this)">AP Physics 1</div><div class="cpill" onclick="tog(this)">AP Physics C</div><div class="cpill" onclick="tog(this)">AP Biology</div><div class="cpill" onclick="tog(this)">AP US History</div><div class="cpill" onclick="tog(this)">AP World History</div><div class="cpill" onclick="tog(this)">AP English Lang</div><div class="cpill" onclick="tog(this)">AP English Lit</div><div class="cpill" onclick="tog(this)">AP Economics</div><div class="cpill" onclick="tog(this)">AP Psychology</div><div class="cpill" onclick="tog(this)">AP Computer Science</div><div class="cpill" onclick="tog(this)">College Essay</div><div class="cpill" onclick="tog(this)">University Application</div><div class="cpill" onclick="tog(this)">Algebra</div><div class="cpill" onclick="tog(this)">Geometry</div><div class="cpill" onclick="tog(this)">Precalculus</div></div></div>
+        <div class="fg" style="margin-top:11px"><label class="fl">Other / Anything Goes</label><div class="check-pills"><div class="cpill" onclick="tog(this)">Languages</div><div class="cpill" onclick="tog(this)">Music</div><div class="cpill" onclick="tog(this)">Coding</div><div class="cpill" onclick="tog(this)">Interview Prep</div><div class="cpill" onclick="tog(this)">Creative Writing</div><div class="cpill" onclick="tog(this)">University Application</div><div class="cpill" onclick="tog(this)">Business</div><div class="cpill" onclick="tog(this)">Life Skills</div><div class="cpill" onclick="tog(this)">Other</div></div></div>
+        <div class="fg" style="margin-top:11px"><label class="fl">Levels</label><div class="check-pills"><div class="cpill" onclick="tog(this)">GCSE</div><div class="cpill" onclick="tog(this)">A Level</div><div class="cpill" onclick="tog(this)">IB</div><div class="cpill" onclick="tog(this)">SAT</div><div class="cpill" onclick="tog(this)">ACT</div><div class="cpill" onclick="tog(this)">AP</div><div class="cpill" onclick="tog(this)">University Entry</div><div class="cpill" onclick="tog(this)">Oxbridge Prep</div><div class="cpill" onclick="tog(this)">Adult / Any age</div></div></div>
+        <div class="fg" style="margin-top:11px"><label class="fl">UK Exam Boards</label><div class="check-pills"><div class="cpill" onclick="tog(this)">AQA</div><div class="cpill" onclick="tog(this)">Edexcel</div><div class="cpill" onclick="tog(this)">OCR</div><div class="cpill" onclick="tog(this)">WJEC</div><div class="cpill" onclick="tog(this)">Eduqas</div><div class="cpill" onclick="tog(this)">CIE / Cambridge</div><div class="cpill" onclick="tog(this)">CCEA</div><div class="cpill" onclick="tog(this)">SQA</div><div class="cpill" onclick="tog(this)">IBO</div></div></div>
+        <div class="fg" style="margin-top:13px"><label class="fl">Your qualifications / grades</label><input class="fi" id="t-grades" type="text" placeholder="e.g. A* Maths AQA · Oxford Chemistry · SAT 1560 · AP Calc 5"></div>
+        <div class="fg"><label class="fl">Short bio</label><textarea class="fi" id="t-bio" rows="3" style="resize:vertical;padding-top:7px" placeholder="Who you are, your background, and how you approach sessions."></textarea></div>
+        <div class="fg"><label class="fl">Profile photo <em style="font-style:italic;text-transform:none;letter-spacing:0;font-size:10px">(optional)</em></label><div style="border:var(--lnl);padding:13px;text-align:center;cursor:pointer;color:var(--g4);font-size:11px;letter-spacing:0.09em;text-transform:uppercase;transition:background 0.2s" onmouseover="this.style.background='var(--g1)'" onmouseout="this.style.background='transparent'">Click to upload · JPG or PNG · Max 5MB</div></div>
+        <div style="display:flex;gap:11px"><button class="sbtn back-btn" onclick="onbNext(1)">← Back</button><button class="sbtn" style="flex:1" onclick="onbNext(3)">Continue to Step 3 →</button></div>
+      </div>
+      <div id="onb-s3" style="display:none">
+        <div class="onb-title">Availability &amp; pricing.</div>
+        <div class="onb-sub">You set your own rate. Change anything anytime from your dashboard.</div>
+        <div class="fg"><label class="fl">Days available</label><div class="check-pills"><div class="cpill" onclick="tog(this)">Monday</div><div class="cpill" onclick="tog(this)">Tuesday</div><div class="cpill" onclick="tog(this)">Wednesday</div><div class="cpill" onclick="tog(this)">Thursday</div><div class="cpill" onclick="tog(this)">Friday</div><div class="cpill" onclick="tog(this)">Saturday</div><div class="cpill" onclick="tog(this)">Sunday</div></div></div>
+        <div class="fg" style="margin-top:11px"><label class="fl">Times</label><div class="check-pills"><div class="cpill" onclick="tog(this)">Morning (9am–12pm)</div><div class="cpill" onclick="tog(this)">Afternoon (12–5pm)</div><div class="cpill" onclick="tog(this)">Evening (5–9pm)</div></div></div>
+        <div class="fg" style="margin-top:11px"><label class="fl">Your hourly rate — you decide</label><div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap"><div style="display:flex;align-items:center;gap:5px"><span>£</span><input class="fi" id="t-rate-gbp" type="number" placeholder="e.g. 20" min="5" max="500" style="max-width:84px"></div><span style="font-size:11px;color:var(--g4)">or</span><div style="display:flex;align-items:center;gap:5px"><span>$</span><input class="fi" id="t-rate-usd" type="number" placeholder="e.g. 25" min="5" max="500" style="max-width:84px"></div></div><div style="font-size:10px;color:var(--g4);margin-top:7px;line-height:1.8">Set whatever you think is fair. Studly takes 10% to start — drops to 5% at 30+ sessions. You keep the rest.</div></div>
+        <div class="fg"><label class="fl">Session types</label><div class="check-pills"><div class="cpill on" onclick="tog(this)">1-hour</div><div class="cpill" onclick="tog(this)">90 minutes</div><div class="cpill" onclick="tog(this)">Block of 5</div><div class="cpill" onclick="tog(this)">One-off only</div></div></div>
+        <div class="fg"><label class="fl">Payment</label><div class="check-pills"><div class="cpill on" onclick="tog(this)">Card (Stripe)</div><div class="cpill on" onclick="tog(this)">PayPal</div></div></div>
+        <div class="note-box">All bookings and payments must go through Studly. Arranging sessions outside the platform violates your tutor agreement and may result in permanent account suspension.</div>
+        <div style="display:flex;gap:11px"><button class="sbtn back-btn" onclick="onbNext(2)">← Back</button><button class="sbtn" style="flex:1" onclick="saveTutorProfile()">Finish — Launch My Profile →</button></div>
+        <div style="margin-top:11px;font-size:10px;color:var(--g4);text-align:center">Everything editable from your dashboard at any time.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="page" id="dashboard-page">
+  <div style="padding-top:56px">
+    <div class="dash-header">
+      <div class="dash-greeting">Good to see you,<br><em id="dash-name">there.</em></div>
+      <div>
+        <div class="dash-tabs"><button class="dash-tab on" onclick="dswitch(this,'student-panel')">As Student</button><button class="dash-tab" onclick="dswitch(this,'tutor-panel')">As Tutor</button><button class="dash-tab" onclick="dswitch(this,'settings-panel')">Settings</button></div>
+        <div style="text-align:right;margin-top:7px;display:flex;gap:7px;justify-content:flex-end"><button class="btn-x" onclick="requireAuth('chat')">Messages</button><button class="btn-x" onclick="document.getElementById('promo-modal').classList.remove('hidden')">Promote Profile</button><button class="btn-x" onclick="doLogout()">Log Out</button></div>
+      </div>
+    </div>
+    <div class="dash-panel on" id="student-panel">
+      <div class="dash-main">
+        <div class="dash-sec">Upcoming Sessions</div>
+        <div id="student-sessions" class="dash-empty">No upcoming sessions yet. <span style="color:var(--black);cursor:pointer;text-decoration:underline" onclick="go('hero')">Browse tutors →</span></div>
+        <div class="dash-sec" style="margin-top:24px">Calendar</div>
+        <div class="cal-grid" id="student-cal"></div>
+        <div class="dash-sec" style="margin-top:24px">Past Sessions</div>
+        <div class="dash-empty">Your session history will appear here.</div>
+      </div>
+      <div class="dash-side">
+        <div class="dash-card"><div class="dash-card-num">£0</div><div class="dash-card-lbl">Total Spent</div></div>
+        <div class="dash-card"><div class="dash-card-num" id="student-count">0</div><div class="dash-card-lbl">Sessions Booked</div></div>
+        <button class="sbtn" onclick="go('hero')" style="margin-top:0">Find a Tutor →</button>
+      </div>
+    </div>
+    <div class="dash-panel" id="tutor-panel">
+      <div class="dash-main">
+        <div class="dash-sec">Upcoming Bookings</div>
+        <div id="tutor-sessions" class="dash-empty">No bookings yet. Your profile will receive requests once live.</div>
+        <div class="dash-sec" style="margin-top:24px">Schedule</div>
+        <div class="cal-grid" id="tutor-cal"></div>
+        <div class="dash-sec" style="margin-top:24px">Past Sessions</div>
+        <div class="dash-empty">Completed sessions appear here.</div>
+      </div>
+      <div class="dash-side">
+        <div class="dash-card"><div class="dash-card-num" id="tutor-earnings">£0</div><div class="dash-card-lbl">Earnings This Month</div></div>
+        <div class="dash-card"><div class="dash-card-num" id="tutor-session-count">0</div><div class="dash-card-lbl">Sessions Taught</div></div>
+        <div class="dash-card"><div class="dash-card-num">10%</div><div class="dash-card-lbl">Current Commission</div></div>
+        <button class="sbtn" onclick="document.getElementById('promo-modal').classList.remove('hidden')" style="margin-top:0;margin-bottom:7px">Promote My Profile →</button>
+        <button class="sbtn" style="background:transparent;color:var(--black);margin-top:0" onclick="go('tutor-signup')">Edit Profile</button>
+      </div>
+    </div>
+    <div class="dash-panel" id="settings-panel" style="display:block;border-bottom:var(--ln)">
+      <div style="padding:24px 38px;max-width:460px">
+        <div class="dash-sec">Account Settings</div>
+        <div class="fg"><label class="fl">Display Name</label><input class="fi" id="settings-name" type="text" placeholder="Your name"></div>
+        <div class="fg"><label class="fl">Email</label><input class="fi" id="settings-email" type="email" placeholder="you@email.com"></div>
+        <div class="fg"><label class="fl">New Password</label><input class="fi" type="password" placeholder="Leave blank to keep current"></div>
+        <button class="sbtn" style="max-width:160px;margin-top:8px">Save Changes</button>
+        <div class="dash-sec" style="margin-top:24px">Log Out</div>
+        <button class="sbtn" style="background:transparent;color:#cc0000;border-color:#cc0000;max-width:160px" onclick="doLogout()">Log Out</button>
+      </div>
+    </div>
+    <footer>
+      <div class="fcol"><div class="flogo">Studly</div><div class="fcopy">Dynamic tutoring.<br><a href="/cdn-cgi/l/email-protection#0e7d7a7b6a627720677a4e69636f6762206d6163"><span class="__cf_email__" data-cfemail="b8cbcccddcd4c196d1ccf8dfd5d9d1d496dbd7d5">[email&#160;protected]</span></a></div></div>
+      <div class="fcol"><div class="fctit">Navigate</div><ul class="flinks"><li><a onclick="go('hero')">Browse</a></li><li><a onclick="requireAuth('chat')">Messages</a></li><li><a onclick="doLogout()">Log Out</a></li></ul></div>
+      <div class="fcol"></div><div class="fcol"></div><div class="fcol"></div>
+    </footer>
+  </div>
+</div>
+
+<!-- CHAT -->
+<div class="page" id="chat-page">
+  <div style="padding-top:56px">
+    <div class="chat-wrap">
+      <div class="chat-list">
+        <div class="chat-list-hdr">Messages</div>
+        <div id="chat-list-items" style="padding:12px 16px;font-size:11px;color:var(--g4);font-style:italic;border-bottom:var(--lnl);line-height:1.7">Your conversations appear here once you start booking sessions.</div>
+      </div>
+      <div class="chat-main">
+        <div class="chat-hdr"><div><div class="chat-hdr-name">Messages</div><div class="chat-hdr-note">Select a conversation</div></div></div>
+        <div class="chat-notice">⚠ All sessions must be booked and paid through Studly. Sharing contact details or arranging payment outside the platform is not permitted and may result in account suspension.</div>
+        <div class="chat-messages" id="chat-msgs">
+          <div style="font-size:12px;color:var(--g4);font-style:italic;padding:20px 0">Select a conversation to view messages.</div>
+        </div>
+        <div class="chat-input-row">
+          <textarea class="chat-input" id="chat-input-field" rows="1" placeholder="Type a message..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatMessage();}"></textarea>
+          <button class="chat-send" onclick="sendChatMessage()">Send</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- INFO -->
+<div class="page" id="info-page">
+  <div style="padding-top:56px">
+    <div style="padding:48px;border-bottom:var(--ln);max-width:680px">
+      <div style="font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--g4);margin-bottom:14px">About Studly</div>
+      <div style="font-family:var(--serif);font-size:clamp(28px,5vw,52px);font-weight:300;line-height:1;margin-bottom:20px;">Dynamic &amp; flexible<br>tutoring for a<br><em>dynamic world.</em></div>
+      <div style="font-size:13px;color:var(--g5);line-height:1.9;max-width:480px">Studly was built for the world we actually live in — one that changes fast and demands adaptability. Peer tutoring, professional tutoring, or anything you want to learn. UK, USA, and beyond.</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;border-bottom:var(--ln)">
+      <div style="padding:36px 28px;border-right:var(--ln)"><div style="font-family:var(--serif);font-size:17px;font-weight:400;margin-bottom:12px">Commission Tiers</div><div style="font-size:12px;color:var(--g5);line-height:2.2"><div>Sessions 1–5: <strong>10% to Studly</strong></div><div>Sessions 6–15: <strong>8% to Studly</strong></div><div>Sessions 16–30: <strong>6% to Studly</strong></div><div>Sessions 30+: <strong>5% to Studly</strong></div><div style="margin-top:9px;font-size:10px;color:var(--g4)">Most platforms take 25–40%. Studly is the lowest on the market at scale.</div></div></div>
+      <div style="padding:36px 28px;border-right:var(--ln)"><div style="font-family:var(--serif);font-size:17px;font-weight:400;margin-bottom:12px">Promotion Options</div><div style="font-size:12px;color:var(--g5);line-height:2.2"><div>Basic: <strong>£3.99/month</strong></div><div>Featured: <strong>£6.99/month</strong></div><div>Premium: <strong>£9.99/month</strong></div><div style="margin-top:9px;font-size:10px;color:var(--g4)">Featured tutors appear at the top of all search results. Cancel anytime.</div></div></div>
+      <div style="padding:36px 28px"><div style="font-family:var(--serif);font-size:17px;font-weight:400;margin-bottom:12px">Contact</div><div style="font-size:12px;color:var(--g5);line-height:2"><div>General inquiries &amp; support:</div><div><a href="/cdn-cgi/l/email-protection#ef9c9b9a8b8396c1869baf88828e8683c18c8082" style="color:var(--black);border-bottom:1px solid var(--black)"><span class="__cf_email__" data-cfemail="daa9aeafbeb6a3f4b3ae9abdb7bbb3b6f4b9b5b7">[email&#160;protected]</span></a></div></div></div>
+    </div>
+    <footer>
+      <div class="fcol"><div class="flogo">Studly</div><div class="fcopy">Dynamic tutoring. UK &amp; USA.</div></div>
+      <div class="fcol"><div class="fctit">Navigate</div><ul class="flinks"><li><a onclick="go('hero')">Find a Tutor</a></li><li><a onclick="go('tutor-signup')">Become a Tutor</a></li><li><a onclick="go('login')">Log In</a></li></ul></div>
+      <div class="fcol"></div><div class="fcol"></div><div class="fcol"></div>
+    </footer>
+  </div>
+</div>
+
+</div>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+const _sb=supabase.createClient(
+  'https://pqteekzbbuowmflhvzov.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBxdGVla3piYnVvd21mbGh2em92Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxNTQyMjAsImV4cCI6MjA5MDczMDIyMH0.WwtEirjkgnITOfDY_jqe6ZH40vQgNS-m7DDv4yaatRY'
+);
+let currentUser=null;
+
+// LOADER — simple and bulletproof
+setTimeout(async function(){
+  try{
+    var s=await _sb.auth.getSession();
+    if(s.data.session)setLoggedIn(s.data.session.user);
+  }catch(e){}
+  var l=document.getElementById('loader');
+  l.style.transition='opacity 0.6s ease';
+  l.style.opacity='0';
+  setTimeout(function(){
+    l.style.display='none';
+    document.getElementById('site').classList.add('visible');
+    if(!localStorage.getItem('studly_welcomed_v5')){
+      setTimeout(function(){document.getElementById('welcome-modal').classList.remove('hidden');},600);
+    }
+  },600);
+  buildCalendar('student-cal');
+  buildCalendar('tutor-cal');
+  loadTutors();
+},1800);
+
+_sb.auth.onAuthStateChange(function(ev,session){
+  if(ev==='SIGNED_IN'&&session)setLoggedIn(session.user);
+  if(ev==='SIGNED_OUT')setLoggedOut();
+});
+
+function setLoggedIn(user){
+  currentUser=user;
+  var name=user.user_metadata&&user.user_metadata.first_name?user.user_metadata.first_name:user.email.split('@')[0];
+  document.getElementById('nav-right').innerHTML='<button class="btn-x" onclick="go(\'dashboard\')">Dashboard</button><button class="btn-x" onclick="requireAuth(\'chat\')">Messages</button><button class="btn-x btn-dark" onclick="doLogout()">Log Out</button>';
+  document.getElementById('dash-name').textContent=name+'.';
+  var sn=document.getElementById('settings-name');if(sn)sn.value=name;
+  var se=document.getElementById('settings-email');if(se)se.value=user.email;
+  var pb=document.getElementById('promote-banner');if(pb)pb.classList.add('show');
+  loadDashboard();
+}
+function setLoggedOut(){
+  currentUser=null;
+  document.getElementById('nav-right').innerHTML='<button class="btn-x" onclick="go(\'login\')">Log In</button><button class="btn-x btn-dark" onclick="go(\'signup\')">Join Free</button>';
+  var pb=document.getElementById('promote-banner');if(pb)pb.classList.remove('show');
+}
+function requireAuth(page){
+  if(currentUser){go(page);if(page==='chat')setTimeout(loadChatList,300);}
+  else go('login');
+}
+
+async function doLogin(){
+  var btn=document.getElementById('login-btn'),msg=document.getElementById('login-msg');
+  var email=document.getElementById('login-email').value.trim(),pw=document.getElementById('login-password').value;
+  if(!email||!pw){showMsg(msg,'err','Please fill in all fields.');return;}
+  btn.disabled=true;btn.textContent='Logging in...';
+  var r=await _sb.auth.signInWithPassword({email:email,password:pw});
+  btn.disabled=false;btn.textContent='Log In';
+  if(r.error){showMsg(msg,'err',r.error.message);return;}
+  go('dashboard');
+}
+
+async function doSignup(){
+  var btn=document.getElementById('signup-btn'),msg=document.getElementById('signup-msg');
+  var first=document.getElementById('signup-first').value.trim(),last=document.getElementById('signup-last').value.trim();
+  var email=document.getElementById('signup-email').value.trim(),pw=document.getElementById('signup-password').value;
+  var region=document.getElementById('signup-region').value,terms=document.getElementById('signup-terms').checked;
+  if(!first||!last||!email||!pw||!region){showMsg(msg,'err','Please fill in all fields.');return;}
+  if(!terms){showMsg(msg,'err','Please agree to the Terms of Service.');return;}
+  if(pw.length<8){showMsg(msg,'err','Password must be at least 8 characters.');return;}
+  btn.disabled=true;btn.textContent='Creating account...';
+  var r=await _sb.auth.signUp({email:email,password:pw,options:{data:{first_name:first,last_name:last,region:region}}});
+  btn.disabled=false;btn.textContent="Create Account — It's Free";
+  if(r.error){showMsg(msg,'err',r.error.message);return;}
+  showMsg(msg,'ok','Account created! Check your email to confirm, then log in.');
+}
+
+async function doTutorSignup(){
+  var btn=document.getElementById('tutor-s1-btn'),msg=document.getElementById('tutor-msg');
+  var first=document.getElementById('t-first').value.trim(),last=document.getElementById('t-last').value.trim();
+  var email=document.getElementById('t-email').value.trim(),pw=document.getElementById('t-password').value;
+  var terms=document.getElementById('tutor-terms').checked;
+  if(!first||!last||!email||!pw){showMsg(msg,'err','Please fill in all fields.');return;}
+  if(!terms){showMsg(msg,'err','Please agree to the tutor terms.');return;}
+  if(pw.length<8){showMsg(msg,'err','Password must be at least 8 characters.');return;}
+  btn.disabled=true;btn.textContent='Creating account...';
+  var r=await _sb.auth.signUp({email:email,password:pw,options:{data:{first_name:first,last_name:last,role:'tutor',year_group:document.getElementById('t-year').value}}});
+  btn.disabled=false;btn.textContent='Continue to Step 2 →';
+  if(r.error){showMsg(msg,'err',r.error.message);return;}
+  showMsg(msg,'ok','Account created! Continue to build your profile.');
+  setTimeout(function(){onbNext(2);},900);
+}
+
+async function saveTutorProfile(){
+  if(!currentUser){go('login');return;}
+  // Collect all selected subjects, levels, boards
+  function getSelected(container){
+    var pills=document.querySelectorAll('#onb-s2 .cpill.on');
+    var vals=[];
+    pills.forEach(function(p){vals.push(p.textContent.trim());});
+    return vals.join(', ');
+  }
+  function getDays(){
+    var pills=document.querySelectorAll('#onb-s3 .cpill.on');
+    var vals=[];
+    pills.forEach(function(p){vals.push(p.textContent.trim());});
+    return vals.join(', ');
+  }
+  var tutorType=document.querySelector('#tutor-type-tog .rbtn.on');
+  var profile={
+    id:currentUser.id,
+    first_name:currentUser.user_metadata.first_name||'',
+    last_name:currentUser.user_metadata.last_name||'',
+    role:'tutor',
+    tutor_type:tutorType?tutorType.textContent.trim():'Peer Tutor',
+    subjects:getSelected(),
+    grades:document.getElementById('t-grades').value.trim(),
+    bio:document.getElementById('t-bio').value.trim(),
+    rate_gbp:parseFloat(document.getElementById('t-rate-gbp').value)||null,
+    rate_usd:parseFloat(document.getElementById('t-rate-usd').value)||null,
+    availability:getDays(),
+    region:document.querySelector('#onb-s2 .cpill.on')?document.querySelector('#onb-s2 .cpill.on').textContent.trim():''
+  };
+  var r=await _sb.from('profiles').upsert(profile);
+  if(r.error){
+    alert('Could not save profile: '+r.error.message);return;
+  }
+  go('dashboard');
+  loadTutors();
+}
+
+async function loadTutors(){
+  var r=await _sb.from('profiles').select('*').eq('role','tutor').order('created_at',{ascending:false});
+  if(r.error||!r.data||r.data.length===0){return;}
+  var grid=document.getElementById('tutor-grid');
+  var html='<div class="tc-promoted" onclick="document.getElementById(\'promo-modal\').classList.remove(\'hidden\')">';
+  html+='<div class="tc-promoted-badge">✦ Promoted Slot — Available</div>';
+  html+='<div class="tc-promoted-body"><div><div class="tc-promoted-name">Your Profile Here</div><div class="tc-promoted-subj">Featured · Top of Results</div><div class="tc-promoted-desc">Be the first to claim the top spot.</div></div><div class="tc-promoted-rate">£9.99<span>/month to feature</span></div></div></div>';
+  r.data.forEach(function(t){
+    var name=(t.first_name||'')+' '+(t.last_name?t.last_name.charAt(0)+'.':"");
+    var initials=((t.first_name||'?').charAt(0)+(t.last_name||'?').charAt(0)).toUpperCase();
+    var badge=t.tutor_type==='Professional'?'pro-badge':t.tutor_type==='Independent Expert'?'exp-badge':'peer-badge';
+    var badgeText=t.tutor_type||'Peer Tutor';
+    var rate=t.rate_gbp?'£'+t.rate_gbp:(t.rate_usd?'$'+t.rate_usd:'Rate TBC');
+    var subjs=t.subjects?t.subjects.split(',').slice(0,2).join(' · '):'';
+    html+='<div class="tc" onclick="openProfile(\''+t.id+'\')">';
+    html+='<div class="tcimg"><div class="tcimg-initials">'+initials+'</div><span class="fbadge '+badge+'">'+badgeText+'</span></div>';
+    html+='<div class="tcb"><div class="tname">'+name+'</div>';
+    if(subjs)html+='<div class="tsubj">'+subjs+'</div>';
+    if(t.bio)html+='<div class="tdesc">'+t.bio.substring(0,80)+(t.bio.length>80?'...':'')+'</div>';
+    if(t.grades)html+='<div class="tqual"><span class="tqual-dot"></span>'+t.grades.substring(0,50)+'</div>';
+    if(t.availability)html+='<div class="tqual"><span class="tqual-dot"></span>'+t.availability.split(',').slice(0,3).join(', ')+'</div>';
+    html+='<div class="tmeta"><div class="trate">'+rate+'<span>/hr</span></div></div>';
+    html+='</div></div>';
+  });
+  document.getElementById('tutor-count').textContent='Showing '+r.data.length+' tutor'+(r.data.length!==1?'s':'');
+  grid.innerHTML=html;
+}
+
+function openProfile(id){
+  var tutor=null;
+  // find tutor in loaded data
+  _sb.from('profiles').select('*').eq('id',id).single().then(function(r){
+    if(r.data)openBookModal(r.data);
+    else if(!currentUser)go('login');
+  });
+}
+
+async function doLogout(){await _sb.auth.signOut();go('hero');}
+
+// ── STRIPE + BOOKING SYSTEM ──
+var STRIPE_PK='pk_live_51THs88LFWvxOcvBYSADQGhnRMw8JVuwMmM3989Mysld0nP8lgsAFKndWSiYqCn66donvQI2cv9UHF7Sx24HSzxIY00dN1AgLtJ';
+var EDGE_URL='https://pqteekzbbuowmflhvzov.supabase.co/functions/v1/create-payment';
+var stripe=null,cardElement=null,currentBookingTutor=null,bookStep=1;
+
+function initStripe(){
+  if(!stripe&&window.Stripe){
+    stripe=Stripe(STRIPE_PK);
+    var elements=stripe.elements();
+    cardElement=elements.create('card',{
+      style:{base:{fontFamily:"'Libre Baskerville',serif",fontSize:'13px',color:'#0a0a0a','::placeholder':{color:'#c8c8c4'}},invalid:{color:'#cc0000'}}
+    });
+    cardElement.mount('#stripe-card-element');
+    cardElement.on('change',function(e){
+      var err=document.getElementById('stripe-error');
+      if(e.error){err.textContent=e.error.message;err.style.display='block';}
+      else{err.style.display='none';}
+    });
+  }
+}
+
+function getSessionPrice(tutor,type){
+  var base=tutor.rate_gbp||20;
+  if(type==='90-min')return Math.round(base*1.4*100)/100;
+  if(type==='block-5')return Math.round(base*4.5*100)/100;
+  return base;
+}
+
+function openBookModal(tutor){
+  if(!currentUser){go('login');return;}
+  currentBookingTutor=tutor;
+  bookStep=1;
+  document.getElementById('book-modal').classList.remove('hidden');
+  document.getElementById('book-step-1').style.display='block';
+  document.getElementById('book-step-2').style.display='none';
+  document.getElementById('book-step-3').style.display='none';
+  document.getElementById('book-footer').style.display='block';
+  document.getElementById('book-next-btn').textContent='Continue to Payment →';
+  document.getElementById('book-next-btn').disabled=false;
+  document.getElementById('book-tutor-name').textContent='Booking with '+(tutor.first_name||'tutor');
+  document.getElementById('book-price-amount').textContent='—';
+  document.getElementById('book-type').value='';
+  document.getElementById('book-date').value='';
+  document.getElementById('book-notes').value='';
+  document.getElementById('book-type').onchange=function(){
+    var t=this.value;
+    if(t&&currentBookingTutor){
+      var p=getSessionPrice(currentBookingTutor,t);
+      var currency=currentBookingTutor.rate_gbp?'£':'$';
+      document.getElementById('book-price-amount').textContent=currency+p;
+    }
+  };
+  setTimeout(initStripe,300);
+}
+
+function closeBookModal(){
+  document.getElementById('book-modal').classList.add('hidden');
+  currentBookingTutor=null;bookStep=1;
+}
+
+async function bookNext(){
+  var btn=document.getElementById('book-next-btn');
+  if(bookStep===1){
+    var type=document.getElementById('book-type').value;
+    var date=document.getElementById('book-date').value;
+    var time=document.getElementById('book-time').value;
+    if(!type||!date||!time){alert('Please fill in session type, date and time.');return;}
+    document.getElementById('book-step-1').style.display='none';
+    document.getElementById('book-step-2').style.display='block';
+    btn.textContent='Pay & Send Booking Request →';
+    bookStep=2;
+    return;
+  }
+  if(bookStep===2){
+    btn.disabled=true;btn.textContent='Processing...';
+    try{
+      var tutor=currentBookingTutor;
+      var amount=getSessionPrice(tutor,document.getElementById('book-type').value);
+      var currency=tutor.rate_gbp?'gbp':'usd';
+
+      // Get session token for edge function auth
+      var sess=await _sb.auth.getSession();
+      var token=sess.data.session?sess.data.session.access_token:'';
+
+      // Create payment intent via edge function
+      var res=await fetch(EDGE_URL,{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+        body:JSON.stringify({
+          amount:amount,currency:currency,
+          tutor_id:tutor.id,student_id:currentUser.id,
+          booking_id:'pending',
+          description:'Studly session with '+tutor.first_name
+        })
+      });
+      var data=await res.json();
+      if(data.error){throw new Error(data.error);}
+
+      // Confirm payment with Stripe
+      var result=await stripe.confirmCardPayment(data.client_secret,{
+        payment_method:{card:cardElement}
+      });
+      if(result.error){
+        var err=document.getElementById('stripe-error');
+        err.textContent=result.error.message;err.style.display='block';
+        btn.disabled=false;btn.textContent='Pay & Send Booking Request →';
+        return;
+      }
+
+      // Save booking to Supabase
+      await _sb.from('bookings').insert({
+        student_id:currentUser.id,
+        tutor_id:tutor.id,
+        session_type:document.getElementById('book-type').value,
+        preferred_date:document.getElementById('book-date').value,
+        preferred_time:document.getElementById('book-time').value,
+        notes:document.getElementById('book-notes').value,
+        payment_method:'card',
+        status:'paid_pending_confirmation'
+      });
+
+      // Show confirmation
+      document.getElementById('book-step-2').style.display='none';
+      document.getElementById('book-step-3').style.display='block';
+      document.getElementById('book-footer').style.display='none';
+      loadDashboard();
+    }catch(e){
+      alert('Payment failed: '+e.message);
+      btn.disabled=false;btn.textContent='Pay & Send Booking Request →';
+    }
+    return;
+  }
+}
+
+// ── DASHBOARD DATA ──
+async function loadDashboard(){
+  if(!currentUser)return;
+  // Load student bookings
+  var sb=await _sb.from('bookings').select('*, profiles!bookings_tutor_id_fkey(first_name,last_name,subjects)').eq('student_id',currentUser.id).order('created_at',{ascending:false});
+  if(sb.data&&sb.data.length>0){
+    var html='';
+    sb.data.forEach(function(b){
+      var tname=b.profiles?(b.profiles.first_name+' '+b.profiles.last_name):'Tutor';
+      var statusColor=b.status==='paid_pending_confirmation'?'#e8c84a':b.status==='confirmed'?'#00aa44':'#888884';
+      var statusText=b.status==='paid_pending_confirmation'?'Awaiting confirmation':b.status==='confirmed'?'Confirmed':'Pending';
+      html+='<div class="dash-row"><div><div class="dash-name-s">'+tname+'</div><div class="dash-meta">'+b.session_type+' · '+b.preferred_date+' · '+b.preferred_time+'</div></div>';
+      html+='<div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:'+statusColor+'">'+statusText+'</div></div>';
+    });
+    var sp=document.getElementById('student-sessions');
+    if(sp)sp.innerHTML=html;
+    var sc=document.getElementById('student-count');
+    if(sc)sc.textContent=sb.data.length;
+  }
+  // Load tutor bookings
+  var tb=await _sb.from('bookings').select('*, profiles!bookings_student_id_fkey(first_name,last_name)').eq('tutor_id',currentUser.id).order('created_at',{ascending:false});
+  if(tb.data&&tb.data.length>0){
+    var html2='';
+    tb.data.forEach(function(b){
+      var sname=b.profiles?(b.profiles.first_name+' '+b.profiles.last_name):'Student';
+      html2+='<div class="dash-row"><div><div class="dash-name-s">'+sname+'</div><div class="dash-meta">'+b.session_type+' · '+b.preferred_date+' · '+b.preferred_time+'</div><div class="dash-meta" style="margin-top:3px;font-style:italic">'+b.notes+'</div></div>';
+      if(b.status==='paid_pending_confirmation'){
+        html2+='<button class="btn-x" onclick="confirmSession(\''+b.id+'\')">Confirm</button>';
+      }else{
+        html2+='<div style="font-size:10px;color:#00aa44;letter-spacing:0.1em;text-transform:uppercase">Confirmed</div>';
+      }
+      html2+='</div>';
+    });
+    var tp=document.getElementById('tutor-sessions');
+    if(tp)tp.innerHTML=html2;
+    var tc2=document.getElementById('tutor-session-count');
+    if(tc2)tc2.textContent=tb.data.length;
+    // Earnings
+    var earned=tb.data.filter(function(b){return b.status==='confirmed';}).length;
+    var ep=document.getElementById('tutor-earnings');
+    if(ep)ep.textContent='£'+(earned*20); // rough estimate
+  }
+}
+
+async function confirmSession(bookingId){
+  await _sb.from('bookings').update({status:'confirmed'}).eq('id',bookingId);
+  loadDashboard();
+}
+
+// ── CHAT / MESSAGES ──
+var activeChatBookingId=null;
+
+async function loadMessages(bookingId){
+  activeChatBookingId=bookingId;
+  var r=await _sb.from('messages').select('*').eq('booking_id',bookingId).order('created_at',{ascending:true});
+  var box=document.getElementById('chat-msgs');
+  if(!box)return;
+  if(!r.data||r.data.length===0){box.innerHTML='<div style="font-size:12px;color:var(--g4);font-style:italic;padding:20px 0">No messages yet. Start the conversation.</div>';return;}
+  var html='';
+  r.data.forEach(function(m){
+    var isMe=m.sender_id===currentUser.id;
+    html+='<div class="msg '+(isMe?'me':'them')+'">'+m.content+'<div class="msg-meta">'+(isMe?'You':'Tutor')+'</div></div>';
+  });
+  box.innerHTML=html;
+  box.scrollTop=box.scrollHeight;
+}
+
+async function sendChatMessage(){
+  var input=document.getElementById('chat-input-field');
+  if(!input||!input.value.trim()||!activeChatBookingId||!currentUser)return;
+  var content=input.value.trim();
+  input.value='';
+  await _sb.from('messages').insert({booking_id:activeChatBookingId,sender_id:currentUser.id,content:content});
+  loadMessages(activeChatBookingId);
+}
+
+async function loadChatList(){
+  if(!currentUser)return;
+  var r=await _sb.from('bookings').select('*, profiles!bookings_tutor_id_fkey(first_name,last_name)').or('student_id.eq.'+currentUser.id+',tutor_id.eq.'+currentUser.id).order('created_at',{ascending:false});
+  if(!r.data||r.data.length===0)return;
+  var list=document.getElementById('chat-list-items');
+  if(!list)return;
+  var html='';
+  r.data.forEach(function(b){
+    var name=b.profiles?(b.profiles.first_name+' '+b.profiles.last_name):'Booking';
+    html+='<div class="chat-item" onclick="loadMessages(\''+b.id+'\')">';
+    html+='<div class="chat-item-name">'+name+'</div>';
+    html+='<div class="chat-item-preview">'+b.session_type+' · '+b.preferred_date+'</div></div>';
+  });
+  list.innerHTML=html;
+  if(r.data[0])loadMessages(r.data[0].id);
+}
+
+function showMsg(el,type,text){el.className='auth-msg '+type+' show';el.textContent=text;}
+function openWelcome(){document.getElementById('welcome-modal').classList.remove('hidden');}
+function closeWelcome(){document.getElementById('welcome-modal').classList.add('hidden');localStorage.setItem('studly_welcomed_v5','1');}
+function selectPromo(el){document.querySelectorAll('.promo-option').forEach(function(o){o.classList.remove('selected');});el.classList.add('selected');}
+
+function go(id){
+  var t=document.getElementById('pt');t.classList.add('in');
+  setTimeout(function(){
+    document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
+    var pg=document.getElementById(id+'-page');if(pg)pg.classList.add('active');
+    window.scrollTo(0,0);
+    setTimeout(function(){t.classList.remove('in');},50);
+  },280);
+}
+function fp(g,el){document.querySelectorAll('#'+g+' .pill').forEach(function(p){p.classList.remove('on');});el.classList.add('on');}
+function tog(el){el.classList.toggle('on');}
+function rsel(el,togId){document.getElementById(togId).querySelectorAll('.rbtn').forEach(function(b){b.classList.remove('on');});el.classList.add('on');}
+function theme(t,el){
+  document.querySelectorAll('.swatch').forEach(function(s){s.classList.remove('on');});el.classList.add('on');
+  var r=document.documentElement;
+  if(t==='w'){r.style.setProperty('--white','#fafaf8');r.style.setProperty('--g1','#f5f5f3');}
+  else if(t==='v'){r.style.setProperty('--white','#f9f7f0');r.style.setProperty('--g1','#f2efea');}
+  else{r.style.setProperty('--white','#eeece8');r.style.setProperty('--g1','#e4e2de');}
+}
+function switchRegion(r){
+  ['uk','us','other'].forEach(function(x){
+    document.getElementById('tab-'+x).classList.toggle('on',x===r);
+    document.getElementById('filters-'+x).style.display=x===r?'block':'none';
+  });
+}
+function onbNext(step){
+  [1,2,3].forEach(function(i){
+    document.getElementById('onb-s'+i).style.display='none';
+    var sn=document.getElementById('s'+i+'n'),st=document.getElementById('s'+i+'t'),sd=document.getElementById('s'+i+'d');
+    sn.className='onb-snum';st.className='onb-stit';sd.className='onb-sdesc';
+    if(i<step){sn.textContent='✓';sn.classList.add('done');}else{sn.textContent='0'+i;}
+  });
+  document.getElementById('onb-s'+step).style.display='block';
+  document.getElementById('s'+step+'n').classList.add('active');
+  document.getElementById('s'+step+'t').classList.add('active');
+  document.getElementById('s'+step+'d').classList.add('active');
+  window.scrollTo(0,0);
+}
+function dswitch(btn,panelId){
+  document.querySelectorAll('.dash-tab').forEach(function(t){t.classList.remove('on');});btn.classList.add('on');
+  document.querySelectorAll('.dash-panel').forEach(function(p){p.classList.remove('on');p.style.displ
