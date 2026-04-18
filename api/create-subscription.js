@@ -8,54 +8,29 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
-
-  // Promo tier price IDs — you'll create these in Stripe dashboard
-  // and replace these placeholder values
   const PRICE_IDS = {
-    basic:    process.env.STRIPE_PRICE_BASIC,    // £3.99/month
-    featured: process.env.STRIPE_PRICE_FEATURED, // £6.99/month
-    premium:  process.env.STRIPE_PRICE_PREMIUM,  // £9.99/month
+    basic:    process.env.STRIPE_PRICE_BASIC,
+    featured: process.env.STRIPE_PRICE_FEATURED,
+    premium:  process.env.STRIPE_PRICE_PREMIUM,
   };
 
   try {
     const { tier, tutorEmail, tutorId } = req.body;
-
-    if (!tier || !PRICE_IDS[tier]) {
-      return res.status(400).json({ error: 'Invalid promotion tier' });
-    }
-    if (!tutorEmail) {
-      return res.status(400).json({ error: 'Tutor email required' });
-    }
-
-    const priceId = PRICE_IDS[tier];
-    const tierLabels = { basic: 'Basic', featured: 'Featured', premium: 'Premium' };
-    const tierPrices = { basic: '£3.99', featured: '£6.99', premium: '£9.99' };
+    if (!tier || !PRICE_IDS[tier]) return res.status(400).json({ error: 'Invalid tier' });
+    if (!tutorEmail) return res.status(400).json({ error: 'Email required' });
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       mode: 'subscription',
       customer_email: tutorEmail,
-      line_items: [{
-        price: priceId,
-        quantity: 1,
-      }],
-      subscription_data: {
-        metadata: {
-          tutor_id: tutorId || '',
-          tier:     tier,
-          platform: 'studly',
-        },
-      },
-      metadata: {
-        tutor_id: tutorId || '',
-        tier:     tier,
-      },
+      line_items: [{ price: PRICE_IDS[tier], quantity: 1 }],
+      subscription_data: { metadata: { tutor_id: tutorId || '', tier, platform: 'studly' } },
+      metadata: { tutor_id: tutorId || '', tier },
       success_url: `https://studly.it.com?promo=success&tier=${tier}&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url:  'https://studly.it.com?promo=cancelled',
     });
 
     return res.status(200).json({ url: session.url });
-
   } catch(err) {
     console.error('[Studly] Subscription error:', err.message);
     return res.status(500).json({ error: err.message });
