@@ -33,10 +33,12 @@ export default async function handler(req, res) {
   );
 
   try {
+    // ── BOOKING CONFIRMED ─────────────────────────────────────
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object;
       const meta    = session.metadata || {};
-      if (meta.tutee_id && meta.tutor_id) {
+
+      if (session.mode === 'payment' && meta.tutee_id && meta.tutor_id) {
         await sb.from('bookings')
           .update({
             status:     'confirmed',
@@ -47,25 +49,59 @@ export default async function handler(req, res) {
           .eq('tutor_id', meta.tutor_id)
           .eq('status', 'pending_payment');
       }
+
+      // Save subscription ID when promo checkout completes
+      if (session.mode === 'subscription' && meta.tutor_id) {
+        const subId = session.subscription;
+        if (subId) {
+          await sb.from('tutor_profiles').upsert(
+            { id: meta.tutor_id, stripe_subscription_id: subId, updated_at: new Date().toISOString() },
+            { onConflict: 'id' }
+          );
+        }
+      }
     }
 
+    // ── SUBSCRIPTION ACTIVE / UPDATED ─────────────────────────
     if (event.type === 'customer.subscription.created' || event.type === 'customer.subscription.updated') {
       const sub  = event.data.object;
       const meta = sub.metadata || {};
       if (meta.tutor_id && meta.tier) {
-        await sb.from('tutor_profiles')
-          .upsert({ id: meta.tutor_id, promotion_tier: meta.tier, updated_at: new Date().toISOString() }, { onConflict: 'id' });
+        const update = {
+          id:                    meta.tutor_id,
+          promotion_tier:        sub.cancel_at_period_end ? null : meta.tier,
+          stripe_subscription_id: sub.id,
+          updated_at:            new Date().toISOString(),
+        };
+        // If cancelling at period end, keep tier until it actually ends
+        if (sub.cancel_at_period_end) {
+          update.promotion_tier        = meta.tier; // still active until period ends
+          update.promotion_cancels_at  = new Date(sub.current_period_end * 1000).toISOString();
+        } else {
+          update.promotion_cancels_at  = null;
+        }
+        await sb.from('tutor_profiles').upsert(update, { onConflict: 'id' });
       }
     }
 
+    // ── SUBSCRIPTION ENDED ────────────────────────────────────
     if (event.type === 'customer.subscription.deleted') {
       const sub  = event.data.object;
       const meta = sub.metadata || {};
       if (meta.tutor_id) {
-        await sb.from('tutor_profiles')
-          .upsert({ id: meta.tutor_id, promotion_tier: null, updated_at: new Date().toISOString() }, { onConflict: 'id' });
+        await sb.from('tutor_profiles').upsert(
+          {
+            id:                    meta.tutor_id,
+            promotion_tier:        null,
+            stripe_subscription_id: null,
+            promotion_cancels_at:  null,
+            updated_at:            new Date().toISOString(),
+          },
+          { onConflict: 'id' }
+        );
       }
     }
+
   } catch(err) {
     console.error('Webhook handler error:', err.message);
   }
