@@ -1,0 +1,21 @@
+# Environment variables - never commit these
+.env
+.env.local
+.env.production
+.env*.local
+
+# Secrets
+secrets.json
+*.pem
+*.key
+
+# Dependencies
+node_modules/
+.next/
+
+# Vercel
+.vercel/
+
+# OS
+.DS_Store
+Thumbs.db
